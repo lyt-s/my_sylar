@@ -12,7 +12,7 @@ namespace sylar {
 
 class Logger;
 
-//日志事件
+//日志事件，每个日志的输出事件
 class LogEvent {
  public:
   typedef std::shared_ptr<LogEvent> ptr;
@@ -34,9 +34,9 @@ class LogEvent {
   uint32_t m_elapse;             //程序启动到现在的毫秒数
   uint32_t m_threadId = 0;       //线程id
   uint32_t m_fiberId = 0;        //协程id
-  uint64_t m_time;               // 时间戳
+  uint64_t m_time;               //时间戳
 
-  std::stringstream m_ss;
+  std::stringstream m_ss;  // 消息
 };
 
 // 日志级别
@@ -87,7 +87,7 @@ class LogAppender {
 
   void setFormatter(LogFormatter::ptr val) { m_formatter = val; }
 
-  LogFormatter::ptr getFormatter();
+  LogFormatter::ptr getFormatter() { return m_formatter; }
 
  protected:
   LogLevel::Level m_level;
@@ -134,6 +134,7 @@ class StdoutLogAppender : public LogAppender {
 // 定义输出到文件的Appender
 class FileLogAppender : public LogAppender {
   typedef std::shared_ptr<FileLogAppender> ptr;
+
   FileLogAppender(const std::string &filename);
   void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
 

@@ -32,7 +32,6 @@ const char *LogLevel::ToString(LogLevel::Level level) {
   return "UNKNOW";
 }
 
-LogFormatter::ptr LogAppender::getFormatter() { return m_formatter; }
 class MessageFormatItem : public LogFormatter::FormatItem {
  public:
   MessageFormatItem(const std::string &str = "") {}
