@@ -9,6 +9,93 @@
 #include <sstream>  //
 #include <string>
 #include <vector>
+#include "singleton.h"
+#include "util.h"
+/**
+ * @brief 使用流式方式将日志级别level的日志写入到logger
+ */
+#define SYLAR_LOG_LEVEL(logger, level)                                                            \
+  if (logger->getLevel() <= level)                                                                \
+  sylar::LogEventWrap(sylar::LogEvent::ptr(new sylar::LogEvent(logger, level, __FILE__, __LINE__, \
+                                                               0, sylar::GetThreadId(),           \
+                                                               sylar::GetFiberId(), time(0))))    \
+      .getSS()
+/**
+ * @brief 使用流式方式将日志级别debug的日志写入到logger
+ */
+#define SYLAR_LOG_DEBUG(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::DEBUG)
+
+/**
+ * @brief 使用流式方式将日志级别info的日志写入到logger
+ */
+#define SYLAR_LOG_INFO(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::INFO)
+
+/**
+ * @brief 使用流式方式将日志级别warn的日志写入到logger
+ */
+#define SYLAR_LOG_WARN(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::WARN)
+
+/**
+ * @brief 使用流式方式将日志级别error的日志写入到logger
+ */
+#define SYLAR_LOG_ERROR(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::ERROR)
+
+/**
+ * @brief 使用流式方式将日志级别fatal的日志写入到logger
+ */
+#define SYLAR_LOG_FATAL(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::FATAL)
+
+/**
+ * @brief 使用格式化方式将日志级别level的日志写入到logger
+ */
+#define SYLAR_LOG_FMT_LEVEL(logger, level, fmt, ...)                                              \
+  if (logger->getLevel() <= level)                                                                \
+  sylar::LogEventWrap(sylar::LogEvent::ptr(new sylar::LogEvent(logger, level, __FILE__, __LINE__, \
+                                                               0, sylar::GetThreadId(),           \
+                                                               sylar::GetFiberId(), time(0))))    \
+      .getEvent()                                                                                 \
+      ->format(fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别debug的日志写入到logger
+ */
+#define SYLAR_LOG_FMT_DEBUG(logger, fmt, ...) \
+  SYLAR_LOG_FMT_LEVEL(logger, sylar::LogLevel::DEBUG, fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别info的日志写入到logger
+ */
+#define SYLAR_LOG_FMT_INFO(logger, fmt, ...) \
+  SYLAR_LOG_FMT_LEVEL(logger, sylar::LogLevel::INFO, fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别warn的日志写入到logger
+ */
+#define SYLAR_LOG_FMT_WARN(logger, fmt, ...) \
+  SYLAR_LOG_FMT_LEVEL(logger, sylar::LogLevel::WARN, fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别error的日志写入到logger
+ */
+#define SYLAR_LOG_FMT_ERROR(logger, fmt, ...) \
+  SYLAR_LOG_FMT_LEVEL(logger, sylar::LogLevel::ERROR, fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别fatal的日志写入到logger
+ */
+#define SYLAR_LOG_FMT_FATAL(logger, fmt, ...) \
+  SYLAR_LOG_FMT_LEVEL(logger, sylar::LogLevel::FATAL, fmt, __VA_ARGS__)
+
+/**
+ * @brief 获取主日志器
+ */
+#define SYLAR_LOG_ROOT() sylar::LoggerMgr::GetInstance()->getRoot()
+
+/**
+ * @brief 获取name的日志器
+ */
+#define SYLAR_LOG_NAME(name) sylar::LoggerMgr::GetInstance()->getLogger(name)
+
 namespace sylar {
 
 class Logger;
@@ -16,12 +103,30 @@ class Logger;
 // 日志级别
 class LogLevel {
  public:
-  enum Level { UNKNOW = 0, DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4, FATAL = 5 };
+  /**
+   * @brief 日志级别枚举
+   */
+  enum Level {
+    /// 未知级别
+    UNKNOW = 0,
+    /// DEBUG 级别
+    DEBUG = 1,
+    /// INFO 级别
+    INFO = 2,
+    /// WARN 级别
+    WARN = 3,
+    /// ERROR 级别
+    ERROR = 4,
+    /// FATAL 级别
+    FATAL = 5
+  };
+
   /**
    * @brief 将日志级别转成文本输出
    * @param[in] level 日志级别
    */
   static const char *ToString(LogLevel::Level level);
+
   /**
    * @brief 将文本转换成日志级别
    * @param[in] str 日志级别文本
@@ -29,7 +134,9 @@ class LogLevel {
   static LogLevel::Level FromString(const std::string &str);
 };
 
-//日志事件
+/**
+ * @brief 日志事件
+ */
 class LogEvent {
  public:
   typedef std::shared_ptr<LogEvent> ptr;
@@ -45,8 +152,8 @@ class LogEvent {
    * @param[in] time 日志事件(秒)
    * @param[in] thread_name 线程名称
    */
-  LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char *file, int32_t line, uint32_t elapse,
-           uint32_t thread_id, uint32_t fiber_id, uint64_t time, const std::string &thread_name);
+  LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char *file, int32_t line,
+           uint32_t elapse, uint32_t thread_id, uint32_t fiber_id, uint64_t time);
 
   const char *getFile() const { return m_file; }
   int32_t getLine() const { return m_line; }
@@ -64,8 +171,21 @@ class LogEvent {
    */
   std::string getContent() const { return m_ss.str(); }
 
+  /**
+   * @brief 返回日志器
+   */
   std::shared_ptr<Logger> getLogger() const { return m_logger; }
-  std::stringstream &getSS() { return m_ss; }  // 必须 & ？？
+
+  /**
+   * @brief 返回日志级别
+   */
+  LogLevel::Level getLevel() const { return m_level; }
+
+  /**
+   * @brief
+   *
+   */
+  std::stringstream &getSS() { return m_ss; }
 
   /**
    * @brief 格式化写入日志内容
@@ -140,7 +260,8 @@ class LogFormatter {
    * @param[in] event 日志事件
    */
   std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
-  std::ostream &format(std::ostream &ofs, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
+  std::ostream &format(std::ostream &ofs, std::shared_ptr<Logger> logger, LogLevel::Level level,
+                       LogEvent::ptr event);
 
  public:
   /**
@@ -177,6 +298,7 @@ class LogFormatter {
   /// 是否有错误
   bool m_error = false;
 };
+
 /**
  * @brief 日志输出目标
  */
@@ -194,11 +316,11 @@ class LogAppender {
    */
   virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
 
-  virtual std::string toYamlString() = 0;
+  // virtual std::string toYamlString() = 0;
 
   void setFormatter(LogFormatter::ptr val);
 
-  LogFormatter::ptr getFormatter() { return m_formatter; }
+  LogFormatter::ptr getFormatter();
 
   LogLevel::Level getLevel() const { return m_level; }
 
@@ -228,7 +350,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
    * @param[in] level 日志级别
    * @param[in] event 日志事件
    */
-  void log(LogLevel::Level level, LogEvent::ptr &event);
+  void log(LogLevel::Level level, LogEvent::ptr event);
 
   void debug(LogEvent::ptr event);
   void info(LogEvent::ptr event);
@@ -261,12 +383,17 @@ class Logger : public std::enable_shared_from_this<Logger> {
   /**
    * @brief 将日志器的配置转成YAML String
    */
-  std::string toYamlString();
+  // std::string toYamlString();
 
  private:
-  std::string m_name;                       // 日志名称
-  LogLevel::Level m_level;                  // 日志级别
-  std::list<LogAppender::ptr> m_appenders;  // Appender 集合
+  /// 日志名称
+  std::string m_name;
+  /// 日志级别
+  LogLevel::Level m_level;
+
+  /// 日志目标集合
+  std::list<LogAppender::ptr> m_appenders;
+  /// 日志格式器
   LogFormatter::ptr m_formatter;
   Logger::ptr m_root;
 };
@@ -283,11 +410,13 @@ class StdoutLogAppender : public LogAppender {
  * @brief 输出到文件的Appender
  */
 class FileLogAppender : public LogAppender {
+ public:
   typedef std::shared_ptr<FileLogAppender> ptr;
 
   FileLogAppender(const std::string &filename);
   void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
-  std::string toYamlString() override;
+  // std::string toYamlString() override;
+
   /**
    * @brief 重新打开日志文件
    * @return 成功返回true
@@ -314,7 +443,7 @@ class LoggerManager {
   /**
    * @brief 将所有的日志器配置转成YAML String
    */
-  std::string toYamlString();
+  // std::string toYamlString();
 
  private:
   /// 日志器容器

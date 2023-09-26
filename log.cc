@@ -60,7 +60,6 @@ void LogEvent::format(const char *fmt, ...) {
   format(fmt, al);
   va_end(al);
 }
-
 void LogEvent::format(const char *fmt, va_list al) {
   char *buf = nullptr;
   int len = vasprintf(&buf, fmt, al);
@@ -73,7 +72,6 @@ void LogEvent::format(const char *fmt, va_list al) {
 std::stringstream &LogEventWrap::getSS() { return m_event->getSS(); }
 
 void LogAppender::setFormatter(LogFormatter::ptr val) {
-  MutexType::Lock lock(m_mutex);
   m_formatter = val;
   if (m_formatter) {
     m_hasFormatter = true;
@@ -110,7 +108,7 @@ class ElapseFormatItem : public LogFormatter::FormatItem {
     os << event->getElapse();
   }
 };
-
+//
 class NameFormatItem : public LogFormatter::FormatItem {
  public:
   NameFormatItem(const std::string &str = "") {}
