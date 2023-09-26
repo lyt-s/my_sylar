@@ -47,7 +47,7 @@ autoconf/autom4te.cache
 #==============================================================================#
 #m4/
 build/
-third_party
+third_party/
 #*.m4
 *.o
 *.lo
@@ -245,3 +245,6 @@ docs/dev
 
 # Submission zip files
 *.zip
+
+
+third_party/
