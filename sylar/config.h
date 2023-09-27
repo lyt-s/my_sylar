@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include "log.h"
+#include "util.h"
 namespace sylar {
 
 class ConfigVarBase {
@@ -31,7 +32,7 @@ template <class T>
 class ConfigVar : public ConfigVarBase {
  public:
   using ptr = std::shared_ptr<ConfigVar>;
-  ConfigVar(const std::string name, const T &default_value, const std::string description = "")
+  ConfigVar(const std::string name, const T &default_value, const std::string description)
       : ConfigVarBase(name, description), m_val(default_value) {}
 
   std::string toString() override {
@@ -63,19 +64,11 @@ class ConfigVar : public ConfigVarBase {
 class Config {
  public:
   using ConfigVarMap = std::map<std::string, ConfigVarBase::ptr>;
-  template <class T>
-  static typename ConfigVar<T>::ptr Lookup(const std::string &name) {
-    auto it = s_datas.find(name);
-    if (it == s_datas.end()) {
-      return nullptr;
-    }
-    return std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
-  }
 
   template <class T>
   static typename ConfigVar<T>::ptr Lookup(const std::string &name, const T &default_value,
                                            const std::string &description) {
-    auto tmp = Lookup(name);
+    auto tmp = Lookup<T>(name);
     if (tmp) {
       SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "Lookup name = " << name << " exists";
       return tmp;
@@ -89,6 +82,15 @@ class Config {
     typename ConfigVar<T>::ptr v(new ConfigVar<T>(name, default_value, description));
     s_datas[name] = v;
     return v;
+  }
+
+  template <class T>
+  static typename ConfigVar<T>::ptr Lookup(const std::string &name) {
+    auto it = s_datas.find(name);
+    if (it == s_datas.end()) {
+      return nullptr;
+    }
+    return std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
   }
 
  private:
