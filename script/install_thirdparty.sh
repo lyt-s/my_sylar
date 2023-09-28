@@ -19,7 +19,7 @@ if [ ! -d "$THIRD_PARTY_DIR/boost" ]; then
     wget https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.gz
     tar -xf boost-1.83.0.tar.gz
     cd  ./boost-1.83.0
-    ./booststrap.sh --prefix=$THIRD_PARTY_DIR/boost || RET=$?
+    ./bootstrap.sh --prefix=$THIRD_PARTY_DIR/boost || RET=$?
     ./b2 install || RET=$?
     cd ..
     rm -rf boost-1.83.0.tar.gz boost-1.83.0
