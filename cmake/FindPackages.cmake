@@ -13,3 +13,4 @@ message(STATUS "Find yaml-cpp in ${yaml-cpp_DIR}")
 message(STATUS "yaml-cpp version: ${yaml-cpp_VERSION}")
 set(yaml-cpp_LIBRARIES ${THIRD_PARTY_DIR}/yaml-cpp/lib/libyaml-cpp.a)
 set(yaml-cpp_INCLUDE_DIRS ${THIRD_PARTY_DIR}/yaml-cpp/include)
+

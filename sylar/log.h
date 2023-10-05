@@ -99,8 +99,11 @@
 namespace sylar {
 
 class Logger;
+class LoggerManager;
 
-// 日志级别
+/**
+ * @brief 日志级别
+ */
 class LogLevel {
  public:
   /**
@@ -155,17 +158,41 @@ class LogEvent {
   LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char *file, int32_t line,
            uint32_t elapse, uint32_t thread_id, uint32_t fiber_id, uint64_t time);
 
+  /**
+   * @brief 返回文件名
+   */
   const char *getFile() const { return m_file; }
+
+  /**
+   * @brief 返回行号
+   */
   int32_t getLine() const { return m_line; }
+
+  /**
+   * @brief 返回耗时
+   */
   uint32_t getElapse() const { return m_elapse; }
+
+  /**
+   * @brief 返回线程ID
+   */
   uint32_t getThreadId() const { return m_threadId; }
+
+  /**
+   * @brief 返回协程ID
+   */
   uint32_t getFiberId() const { return m_fiberId; }
+
+  /**
+   * @brief 返回时间
+   */
   uint64_t getTime() const { return m_time; }
 
   /**
    * @brief 返回线程名称
    */
   const std::string &getThreadName() const { return m_threadName; }
+
   /**
    * @brief 返回日志内容
    */
@@ -182,8 +209,7 @@ class LogEvent {
   LogLevel::Level getLevel() const { return m_level; }
 
   /**
-   * @brief
-   *
+   * @brief 返回日志内容字符串流
    */
   std::stringstream &getSS() { return m_ss; }
 
@@ -198,15 +224,23 @@ class LogEvent {
   void format(const char *fmt, va_list al);
 
  private:
-  const char *m_file = nullptr;  //文件名
-  int32_t m_line = 0;            //行号
-  uint32_t m_elapse = 0;         //程序启动到现在的毫秒数
-  uint32_t m_threadId = 0;       //线程id
-  uint32_t m_fiberId = 0;        //协程id
-  uint64_t m_time = 0;           // 时间戳
-
+  /// 文件名
+  const char *m_file = nullptr;
+  /// 行号
+  int32_t m_line = 0;
+  /// 程序启动开始到现在的毫秒数
+  uint32_t m_elapse = 0;
+  /// 线程ID
+  uint32_t m_threadId = 0;
+  /// 协程ID
+  uint32_t m_fiberId = 0;
+  /// 时间戳
+  uint64_t m_time = 0;
+  /// 线程名称
   std::string m_threadName;
+  /// 日志内容流
   std::stringstream m_ss;
+  /// 日志器
   std::shared_ptr<Logger> m_logger;
   /// 日志等级
   LogLevel::Level m_level;
@@ -217,18 +251,37 @@ class LogEvent {
  */
 class LogEventWrap {
  public:
+  /**
+   * @brief 构造函数
+   * @param[in] e 日志事件
+   */
   LogEventWrap(LogEvent::ptr e);
+
+  /**
+   * @brief 析构函数
+   */
   ~LogEventWrap();
 
+  /**
+   * @brief 获取日志事件
+   */
   LogEvent::ptr getEvent() const { return m_event; }
 
+  /**
+   * @brief 获取日志内容流
+   */
   std::stringstream &getSS();
 
  private:
+  /**
+   * @brief 日志事件
+   */
   LogEvent::ptr m_event;
 };
 
-// 日志格式化
+/**
+ * @brief 日志格式化
+ */
 class LogFormatter {
  public:
   using ptr = std::shared_ptr<LogFormatter>;
@@ -285,9 +338,20 @@ class LogFormatter {
     virtual void format(std::ostream &os, std::shared_ptr<Logger> logger, LogLevel::Level level,
                         LogEvent::ptr event) = 0;
   };
+
+  /**
+   * @brief 初始化,解析日志模板
+   */
   void init();
 
+  /**
+   * @brief 是否有错误
+   */
   bool isError() const { return m_error; }
+
+  /**
+   * @brief 返回日志模板
+   */
   const std::string getPattern() const { return m_pattern; }
 
  private:
@@ -316,14 +380,29 @@ class LogAppender {
    */
   virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
 
-  // virtual std::string toYamlString() = 0;
+  /**
+   * @brief 将日志输出目标的配置转成YAML String
+   */
+  virtual std::string toYamlString() = 0;
 
+  /**
+   * @brief 更改日志格式器
+   */
   void setFormatter(LogFormatter::ptr val);
 
+  /**
+   * @brief 获取日志格式器
+   */
   LogFormatter::ptr getFormatter();
 
+  /**
+   * @brief 获取日志级别
+   */
   LogLevel::Level getLevel() const { return m_level; }
 
+  /**
+   * @brief 设置日志级别
+   */
   void setLevel(LogLevel::Level val) { m_level = val; }
 
  protected:
@@ -331,11 +410,17 @@ class LogAppender {
   LogLevel::Level m_level = LogLevel::DEBUG;
   /// 是否有自己的日志格式器
   bool m_hasFormatter = false;
+  /// Mutex
+
   LogFormatter::ptr m_formatter;
 };
 
-// 日志器
+/**
+ * @brief 日志器
+ */
 class Logger : public std::enable_shared_from_this<Logger> {
+  friend class LoggerManager;
+
  public:
   typedef std::shared_ptr<Logger> ptr;
 
@@ -352,19 +437,68 @@ class Logger : public std::enable_shared_from_this<Logger> {
    */
   void log(LogLevel::Level level, LogEvent::ptr event);
 
+  /**
+   * @brief 写debug级别日志
+   * @param[in] event 日志事件
+   */
   void debug(LogEvent::ptr event);
+
+  /**
+   * @brief 写info级别日志
+   * @param[in] event 日志事件
+   */
   void info(LogEvent::ptr event);
+
+  /**
+   * @brief 写warn级别日志
+   * @param[in] event 日志事件
+   */
   void warn(LogEvent::ptr event);
+
+  /**
+   * @brief 写error级别日志
+   * @param[in] event 日志事件
+   */
   void error(LogEvent::ptr event);
+
+  /**
+   * @brief 写fatal级别日志
+   * @param[in] event 日志事件
+   */
   void fatal(LogEvent::ptr event);
 
+  /**
+   * @brief 添加日志目标
+   * @param[in] appender 日志目标
+   */
   void addAppender(LogAppender::ptr appender);
+
+  /**
+   * @brief 删除日志目标
+   * @param[in] appender 日志目标
+   */
   void delAppender(LogAppender::ptr appender);
+
+  /**
+   * @brief 清空日志目标
+   */
   void clearAppenders();
+
+  /**
+   * @brief 返回日志级别
+   */
   LogLevel::Level getLevel() const { return m_level; }
+
+  /**
+   * @brief 设置日志级别
+   */
   void setLevel(LogLevel::Level val) { m_level = val; }
 
+  /**
+   * @brief 返回日志名称
+   */
   const std::string &getName() const { return m_name; }
+
   /**
    * @brief 设置日志格式器
    */
@@ -383,7 +517,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
   /**
    * @brief 将日志器的配置转成YAML String
    */
-  // std::string toYamlString();
+  std::string toYamlString();
 
  private:
   /// 日志名称
@@ -395,8 +529,10 @@ class Logger : public std::enable_shared_from_this<Logger> {
   std::list<LogAppender::ptr> m_appenders;
   /// 日志格式器
   LogFormatter::ptr m_formatter;
+  /// 主日志器
   Logger::ptr m_root;
 };
+
 /**
  * @brief 输出到控制台的Appender
  */
@@ -404,6 +540,7 @@ class StdoutLogAppender : public LogAppender {
  public:
   typedef std::shared_ptr<StdoutLogAppender> ptr;
   void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
+  std::string toYamlString() override;
 };
 
 /**
@@ -415,7 +552,7 @@ class FileLogAppender : public LogAppender {
 
   FileLogAppender(const std::string &filename);
   void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
-  // std::string toYamlString() override;
+  std::string toYamlString() override;
 
   /**
    * @brief 重新打开日志文件
@@ -424,26 +561,44 @@ class FileLogAppender : public LogAppender {
   bool reopen();
 
  private:
+  /// 文件路径
   std::string m_filename;
+  /// 文件流
   std::ofstream m_filestream;
   /// 上次重新打开时间
   uint64_t m_lastTime = 0;
 };
 
+/**
+ * @brief 日志器管理类
+ */
 class LoggerManager {
  public:
+  /**
+   * @brief 构造函数
+   */
   LoggerManager();
 
+  /**
+   * @brief 获取日志器
+   * @param[in] name 日志器名称
+   */
   Logger::ptr getLogger(const std::string &name);
 
+  /**
+   * @brief 初始化
+   */
   void init();
 
+  /**
+   * @brief 返回主日志器
+   */
   Logger::ptr getRoot() const { return m_root; }
 
   /**
    * @brief 将所有的日志器配置转成YAML String
    */
-  // std::string toYamlString();
+  std::string toYamlString();
 
  private:
   /// 日志器容器
@@ -451,6 +606,7 @@ class LoggerManager {
   /// 主日志器
   Logger::ptr m_root;
 };
+
 /// 日志器管理类单例模式
 typedef sylar::Singleton<LoggerManager> LoggerMgr;
 

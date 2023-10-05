@@ -12,6 +12,10 @@ PROJECT_ROOT_DIR=$(realpath "$SCRIPT_DIR/../")
 THIRD_PARTY_DIR=$(realpath "$SCRIPT_DIR/../third_party/")
 RET=0
 
+if [ ! -d "$THIRD_PARTY_DIR" ]; then
+    mkdir -p $THIRD_PARTY_DIR
+fi
+
 cd $THIRD_PARTY_DIR
 #Install Boost
 if [ ! -d "$THIRD_PARTY_DIR/boost" ]; then
