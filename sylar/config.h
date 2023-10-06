@@ -1,5 +1,11 @@
 #ifndef SYLAR_CONFIG_H_
 #define SYLAR_CONFIG_H_
+#include "log.h"
+#include "thread.h"
+#include "util.h"
+#include "yaml-cpp/node/node.h"
+#include "yaml-cpp/node/parse.h"
+
 #include <sys/types.h>
 #include <yaml-cpp/yaml.h>
 #include <boost/lexical_cast.hpp>
@@ -17,10 +23,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include "log.h"
-#include "util.h"
-#include "yaml-cpp/node/node.h"
-#include "yaml-cpp/node/parse.h"
+
 namespace sylar {
 
 class ConfigVarBase {
@@ -241,6 +244,7 @@ template <class T, class FromStr = LexicalCast<std::string, T>,
           class ToStr = LexicalCast<T, std::string>>
 class ConfigVar : public ConfigVarBase {
  public:
+  typedef RWMutex RWMutexType;
   using ptr = std::shared_ptr<ConfigVar>;
   using on_change_cb = std::function<void(const T &old_value, const T &new_value)>;
 
@@ -250,6 +254,7 @@ class ConfigVar : public ConfigVarBase {
   std::string toString() override {
     try {
       // return boost::lexical_cast<std::string>(m_val);
+      RWMutexType::ReadLock lock(m_mutex);
       return ToStr()(m_val);
     } catch (std::exception &e) {
       SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << "configVar::toString exception" << e.what()
@@ -269,11 +274,18 @@ class ConfigVar : public ConfigVarBase {
     return false;
   }
 
-  const T getValue() const { return m_val; }
+  const T getValue() {
+    RWMutexType::ReadLock lock(m_mutex);
+    return m_val;
+  }
   void setValue(T val) {
-    if (val == m_val) {
-      return;
+    {  // 加括号是 产生一个局部域，出了括号，就会释放锁
+      RWMutexType::ReadLock lock(m_mutex);
+      if (val == m_val) {
+        return;
+      }
     }
+    RWMutexType::WriteLock lock(m_mutex);
     for (auto &i : m_cbs) {
       i.second(m_val, val);
     }
@@ -281,15 +293,26 @@ class ConfigVar : public ConfigVarBase {
   }
   std::string getTypeName() const override { return typeid(T).name(); }
 
-  void addListener(u_int64_t key, on_change_cb cb) { m_cbs[key] = cb; }
-  void delListener(u_int64_t key, on_change_cb) { m_cbs.erase(key); }
+  u_int64_t addListener(u_int64_t key, on_change_cb cb) {
+    static u_int64_t s_fun_id = 0;
+    RWMutexType::WriteLock lock(m_mutex);
+    ++s_fun_id;
+    m_cbs[s_fun_id] = cb;
+    return s_fun_id;
+  }
+  void delListener(u_int64_t key, on_change_cb) {
+    RWMutexType::WriteLock lock(m_mutex);
+    m_cbs.erase(key);
+  }
   void clearListener() { m_cbs.clear(); }
   on_change_cb getListener(u_int64_t key) {
+    RWMutexType::ReadLock lock(m_mutex);
     auto it = m_cbs.find(key);
     return it == m_cbs.end() ? nullptr : it->second;
   }
 
  private:
+  RWMutexType m_mutex;
   T m_val;
   // 变更回调函数组，u_int64_t key 要求唯一， 一般可以用hash
   std::map<u_int64_t, on_change_cb> m_cbs;
@@ -298,10 +321,11 @@ class ConfigVar : public ConfigVarBase {
 class Config {
  public:
   using ConfigVarMap = std::unordered_map<std::string, ConfigVarBase::ptr>;
-
+  typedef RWMutex RWMutexType;
   template <class T>
   static typename ConfigVar<T>::ptr Lookup(const std::string &name, const T &default_value,
                                            const std::string &description) {
+    RWMutexType::WriteLock lock(GetMutex());
     auto it = GetDatas().find(name);
     if (it != GetDatas().end()) {
       auto tmp = std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
@@ -335,6 +359,7 @@ class Config {
     // if (it == s_datas.end()) {
     //   return nullptr;
     // }
+    RWMutexType::ReadLock lock(GetMutex());
     auto it = GetDatas().find(name);
     if (it == GetDatas().end()) {
       return nullptr;
@@ -342,13 +367,21 @@ class Config {
     return std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
   }
 
-  static ConfigVarBase::ptr LookupBase(const std::string &name);
   static void LoadFromYaml(const YAML::Node &root);
+  static ConfigVarBase::ptr LookupBase(const std::string &name);
+
+  static void Visit(std::function<void(ConfigVarBase::ptr)> cb);
 
  private:
   static ConfigVarMap &GetDatas() {
     static ConfigVarMap s_datas;
     return s_datas;
+  }
+
+  // 创建全局变量，静态成员的话，静态成员的初始化的顺序，比调用此成员的方法晚，就会出现内存错误
+  static RWMutexType &GetMutex() {
+    static RWMutexType s_mutex;
+    return s_mutex;
   }
 };
 }  // namespace sylar

@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include "singleton.h"
+#include "thread.h"
 #include "util.h"
 /**
  * @brief 使用流式方式将日志级别level的日志写入到logger
@@ -371,6 +372,9 @@ class LogAppender {
 
  public:
   typedef std::shared_ptr<LogAppender> ptr;
+  // typedef Mutex MutexType;
+  typedef Spinlock MutexType;
+  // typedef CASLock MutexType;
   virtual ~LogAppender() {}
   /**
    * @brief 写入日志
@@ -411,7 +415,8 @@ class LogAppender {
   /// 是否有自己的日志格式器
   bool m_hasFormatter = false;
   /// Mutex
-
+  MutexType m_mutex;
+  /// 日志格式器
   LogFormatter::ptr m_formatter;
 };
 
@@ -423,7 +428,9 @@ class Logger : public std::enable_shared_from_this<Logger> {
 
  public:
   typedef std::shared_ptr<Logger> ptr;
-
+  // typedef Mutex MutexType;
+  typedef Spinlock MutexType;
+  // typedef CASLock MutexType;
   /**
    * @brief 构造函数
    * @param[in] name 日志器名称
@@ -524,7 +531,8 @@ class Logger : public std::enable_shared_from_this<Logger> {
   std::string m_name;
   /// 日志级别
   LogLevel::Level m_level;
-
+  /// Mutex
+  MutexType m_mutex;
   /// 日志目标集合
   std::list<LogAppender::ptr> m_appenders;
   /// 日志格式器
@@ -574,6 +582,10 @@ class FileLogAppender : public LogAppender {
  */
 class LoggerManager {
  public:
+  // typedef Mutex MutexType;
+  typedef Spinlock MutexType;
+  // typedef CASLock MutexType;
+
   /**
    * @brief 构造函数
    */
@@ -601,6 +613,8 @@ class LoggerManager {
   std::string toYamlString();
 
  private:
+  /// Mutex
+  MutexType m_mutex;
   /// 日志器容器
   std::map<std::string, Logger::ptr> m_loggers;
   /// 主日志器

@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 #include <semaphore.h>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -114,6 +115,19 @@ struct WriteScopeLockImpl {
   bool m_locked;
 };
 
+class Mutex {
+ public:
+  typedef ScopeLockImpl<Mutex> Lock;
+  Mutex() { pthread_mutex_init(&m_mutex, nullptr); }
+  ~Mutex() { pthread_mutex_destroy(&m_mutex); }
+
+  void lock() { pthread_mutex_lock(&m_mutex); }
+
+  void unlock() { pthread_mutex_unlock(&m_mutex); }
+
+ private:
+  pthread_mutex_t m_mutex;
+};
 // 互斥量
 class RWMutex {
  public:
@@ -132,6 +146,39 @@ class RWMutex {
  private:
   pthread_rwlock_t m_lock;
 };
+
+class Spinlock {
+ public:
+  typedef ScopeLockImpl<Spinlock> Lock;
+  Spinlock() { pthread_spin_init(&m_mutex, 0); }
+
+  ~Spinlock() { pthread_spin_destroy(&m_mutex); }
+
+  void lock() { pthread_spin_lock(&m_mutex); }
+
+  void unlock() { pthread_spin_unlock(&m_mutex); }
+
+ private:
+  pthread_spinlock_t m_mutex;
+};
+
+// todo
+class CASLock {
+ public:
+  typedef ScopeLockImpl<CASLock> Lock;
+  CASLock() { m_mutex.clear(); }
+  ~CASLock() {}
+  void lock() {
+    while (std::atomic_flag_test_and_set_explicit(&m_mutex, std::memory_order_acquire)) {
+    };
+  }
+  void unlock() { std::atomic_flag_clear_explicit(&m_mutex, std::memory_order_release); }
+
+ private:
+  // todo 什么意思
+  volatile std::atomic_flag m_mutex;
+};
+
 class Thread {
  public:
   using ptr = std::shared_ptr<Thread>;

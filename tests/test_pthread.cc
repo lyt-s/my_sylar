@@ -1,10 +1,14 @@
 #include <unistd.h>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "config.h"
 #include "sylar/log.h"
 #include "sylar/thread.h"
 #include "util.h"
+#include "yaml-cpp/node/node.h"
+#include "yaml-cpp/node/parse.h"
 
 sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
 
@@ -24,17 +28,39 @@ void fun1() {
   }
 }
 
+void fun2() {
+  while (true) {
+    SYLAR_LOG_INFO(g_logger) << "XXXXXXXXXXXXXXXXXXXXXXXX";
+  }
+}
+
+void fun3() {
+  while (true) {
+    SYLAR_LOG_INFO(g_logger) << "===============================";
+  }
+}
+
 int main() {
   SYLAR_LOG_INFO(g_logger) << "thread test begin";
+  YAML::Node root = YAML::LoadFile("../template/bin/conf/log2.yml");
+  sylar::Config::LoadFromYaml(root);
   std::vector<sylar::Thread::ptr> thrs;
-  for (int i = 0; i < 5; ++i) {
-    sylar::Thread::ptr thr(new sylar::Thread(&fun1, "name_" + std::to_string(i)));
+
+  for (int i = 0; i < 2; ++i) {
+    sylar::Thread::ptr thr(new sylar::Thread(&fun2, "name_" + std::to_string(i * 2)));
+    sylar::Thread::ptr thr2(new sylar::Thread(&fun3, "name_" + std::to_string(i * 2 + 1)));
+
     thrs.push_back(thr);
+    thrs.push_back(thr2);
   }
-  for (int i = 0; i < 5; ++i) {
+  for (size_t i = 0; i < thrs.size(); ++i) {
     thrs[i]->join();
   }
   SYLAR_LOG_INFO(g_logger) << "thread test end";
   SYLAR_LOG_INFO(g_logger) << "count=" << count;
+  sylar::Config::Visit([](sylar::ConfigVarBase::ptr var) {
+    SYLAR_LOG_INFO(g_logger) << "name=" << var->getName() << "description=" << var->getDescription()
+                             << "typename=" << var->getTypeName() << "value=" << var->toString();
+  });
   return 0;
 }
