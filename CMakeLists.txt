@@ -43,13 +43,14 @@ target_include_directories(sylar    PUBLIC
 # SET_TARGET_PROPERTIES(sylar_static PROPERTIES OUTPUT_NAME "sylar")
 #
 
-#----test-----------------------------------------
+#----test-----------------------------------------------------------------------
 add_executable(test tests/test.cc)
 add_dependencies(test sylar)
 force_redefine_file_macro_for_sources(test) #__FILE__
-target_link_libraries(test sylar)
+target_link_libraries(test PRIVATE sylar)
 target_include_directories(test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-#----test_config------------------------------------------
+
+#----test_config----------------------------------------------------------------
 add_executable(test_config tests/test_config.cc )
 add_dependencies(test_config sylar)
 force_redefine_file_macro_for_sources(test_config) #__FILE__
@@ -71,7 +72,7 @@ target_include_directories(test_thread PRIVATE  ${CMAKE_CURRENT_SOURCE_DIR}
 
 target_link_libraries(test_thread PRIVATE pthread sylar ${Boost_LIBRARIES}
 ${yaml-cpp_LIBRARIES})
-#----test_lexical_cast---------------------------------------------------------------------------
+#----test_lexical_cast----------------------------------------------------------
 add_executable(test_lexical_cast tests/test_lexical_cast.cc)
 
 target_include_directories(test_lexical_cast PRIVATE  ${CMAKE_CURRENT_SOURCE_DIR}
@@ -81,7 +82,17 @@ target_include_directories(test_lexical_cast PRIVATE  ${CMAKE_CURRENT_SOURCE_DIR
 
 target_link_libraries(test_lexical_cast PRIVATE pthread sylar ${Boost_LIBRARIES})
 
-#----test_thread----------------------------------------------------------------
+#----test_util----------------------------------------------------------------
+add_executable(test_util tests/test_util.cc)
+
+target_include_directories(test_util PRIVATE  ${CMAKE_CURRENT_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+
+target_link_libraries(test_util PRIVATE pthread sylar ${Boost_LIBRARIES})
+
+#----test----------------------------------------------------------------
 # 可执行文件输出位置
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 # lib文件输出位置
