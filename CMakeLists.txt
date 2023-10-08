@@ -43,45 +43,7 @@ target_include_directories(sylar    PUBLIC
 # SET_TARGET_PROPERTIES(sylar_static PROPERTIES OUTPUT_NAME "sylar")
 #
 
-#----test-----------------------------------------
-add_executable(test tests/test.cc)
-add_dependencies(test sylar)
-force_redefine_file_macro_for_sources(test) #__FILE__
-target_link_libraries(test sylar)
-target_include_directories(test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-#----test_config------------------------------------------
-add_executable(test_config tests/test_config.cc )
-add_dependencies(test_config sylar)
-force_redefine_file_macro_for_sources(test_config) #__FILE__
-target_include_directories(test_config  PRIVATE  
-                                        ${CMAKE_CURRENT_SOURCE_DIR}
-                                        ${yaml-cpp_INCLUDE_DIRS} 
-                                        ${Boost_INCLUDE_DIRS})
-target_link_libraries(test_config   PRIVATE 
-                                    sylar 
-                                    ${Boost_LIBRARIES}
-                                    ${yaml-cpp_LIBRARIES})
-#----test_thread----------------------------------------------------------------
-add_executable(test_thread tests/test_pthread.cc)
-force_redefine_file_macro_for_sources(test_thread) #__FILE__
-target_include_directories(test_thread PRIVATE  ${CMAKE_CURRENT_SOURCE_DIR}
-                                                ${yaml-cpp_INCLUDE_DIRS} 
-                                                ${Boost_INCLUDE_DIRS})
 
-
-target_link_libraries(test_thread PRIVATE pthread sylar ${Boost_LIBRARIES}
-${yaml-cpp_LIBRARIES})
-#----test_lexical_cast---------------------------------------------------------------------------
-add_executable(test_lexical_cast tests/test_lexical_cast.cc)
-
-target_include_directories(test_lexical_cast PRIVATE  ${CMAKE_CURRENT_SOURCE_DIR}
-                                                ${yaml-cpp_INCLUDE_DIRS} 
-                                                ${Boost_INCLUDE_DIRS})
-
-
-target_link_libraries(test_lexical_cast PRIVATE pthread sylar ${Boost_LIBRARIES})
-
-#----test_thread----------------------------------------------------------------
 # 可执行文件输出位置
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 # lib文件输出位置
@@ -91,3 +53,6 @@ SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# test
+add_subdirectory(tests)
