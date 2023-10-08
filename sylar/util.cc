@@ -1,5 +1,7 @@
 #include "util.h"
 #include <execinfo.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -7,13 +9,14 @@
 #include <string>
 #include <vector>
 
+#include "fiber.h"
 #include "log.h"
 namespace sylar {
 
 sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
 pid_t GetThreadId() { return syscall(SYS_gettid); }
-uint32_t GetFiberId() { return 0; }
+uint64_t GetFiberId() { return sylar::Fiber::GetFiberId(); }
 
 void Backtrace(std::vector<std::string> &bt, int size, int skip) {
   //??

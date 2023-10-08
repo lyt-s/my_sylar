@@ -20,9 +20,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # set(CMAKE_CXX_STANDARD 11)
 #-------------------------------------------------------------------------------
 set(LIB_SRC
+    sylar/config.cc
+    sylar/fiber.cc
     sylar/log.cc
     sylar/util.cc
-    sylar/config.cc
     sylar/thread.cc
     )
 
@@ -82,7 +83,7 @@ target_include_directories(test_lexical_cast PRIVATE  ${CMAKE_CURRENT_SOURCE_DIR
 
 target_link_libraries(test_lexical_cast PRIVATE pthread sylar ${Boost_LIBRARIES})
 
-#----test_util----------------------------------------------------------------
+#----test_util------------------------------------------------------------------
 add_executable(test_util tests/test_util.cc)
 
 target_include_directories(test_util PRIVATE  ${CMAKE_CURRENT_SOURCE_DIR}
@@ -92,7 +93,16 @@ target_include_directories(test_util PRIVATE  ${CMAKE_CURRENT_SOURCE_DIR}
 
 target_link_libraries(test_util PRIVATE pthread sylar ${Boost_LIBRARIES})
 
-#----test----------------------------------------------------------------
+#----test_fiber-----------------------------------------------------------------------
+add_executable(test_fiber tests/test_fiber.cc)
+
+target_include_directories(test_fiber PRIVATE  ${CMAKE_CURRENT_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+
+target_link_libraries(test_fiber PRIVATE pthread sylar ${Boost_LIBRARIES})
+#----test-----------------------------------------------------------------------
 # 可执行文件输出位置
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 # lib文件输出位置

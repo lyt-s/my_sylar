@@ -16,7 +16,7 @@ namespace sylar {
 class Fiber : public std::enable_shared_from_this<Fiber> {
  public:
   typedef std::shared_ptr<Fiber> ptr;
-  enum State { INIT, HOLD, EXEC, TERM, READY };
+  enum State { INIT, HOLD, EXEC, TERM, READY, EXCEPT };
 
  private:
   Fiber();
@@ -31,6 +31,7 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
   void swapIn();
   // 把当前协程切换到后台
   void swapOut();
+  u_int64_t getId() const { return m_id; }
 
  public:
   // 设置当前协程
@@ -44,6 +45,7 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
   static u_int64_t TotalFibers();
 
   static void MainFunc();
+  static u_int64_t GetFiberId();
 
  private:
   u_int64_t m_id = 0;
