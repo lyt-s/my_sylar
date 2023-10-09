@@ -145,6 +145,7 @@ void Fiber::YieldToHold() {
 u_int64_t Fiber::TotalFibers() { return s_fiber_count; }
 
 void Fiber::MainFunc() {
+  // 问题在这里，智能指针引用加1
   Fiber::ptr cur = GetThis();
   SYLAR_ASSERT(cur);
   try {
@@ -159,5 +160,12 @@ void Fiber::MainFunc() {
     cur->m_state = EXCEPT;
     SYLAR_LOG_ERROR(g_logger) << "Fiber Except: ";
   }
+
+  // to do  为什么协程未释放指针，引用计数不小于1
+  auto raw_ptr = cur.get();
+  cur.reset();
+  raw_ptr->swapOut();
+
+  SYLAR_ASSERT2(false, "never reach");
 }
 }  // namespace sylar
