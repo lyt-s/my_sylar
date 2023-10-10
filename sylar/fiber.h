@@ -33,6 +33,8 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
   void swapOut();
   u_int64_t getId() const { return m_id; }
 
+  State getState() { return m_state; }
+
  public:
   // 设置当前协程
   static void SetThis(Fiber *f);
