@@ -3,6 +3,7 @@
 
 #include <string.h>
 // 返回函数栈信息
+#include <assert.h>
 #include <execinfo.h>
 #include "log.h"
 #include "util.h"

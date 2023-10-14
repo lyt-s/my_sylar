@@ -47,3 +47,11 @@ target_include_directories(test_fiber PRIVATE  ${CMAKE_SOURCE_DIR}
 
 target_link_libraries(test_fiber PRIVATE pthread sylar ${Boost_LIBRARIES})
 #----test-----------------------------------------------------------------------
+add_executable(test_schedule test_schedule.cc)
+
+target_include_directories(test_schedule PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+
+target_link_libraries(test_schedule PRIVATE pthread sylar ${Boost_LIBRARIES})

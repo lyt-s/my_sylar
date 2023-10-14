@@ -7,14 +7,17 @@
 #include <cstddef>
 #include <functional>
 #include <memory>
+
 #include "thread.h"
 
 namespace sylar {
+class Scheduler;
 
 // 当成智能指针，成员方法shared_from_this-->获取当前类的智能指针， 继承了enable_shared_from_this。
 // 不能在栈上创建对象，构造函数会智能指针，在构造函数中不能使用shared_from_this
 class Fiber : public std::enable_shared_from_this<Fiber> {
  public:
+  friend class Scheduler;
   typedef std::shared_ptr<Fiber> ptr;
   enum State { INIT, HOLD, EXEC, TERM, READY, EXCEPT };
 
@@ -22,7 +25,7 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
   Fiber();
 
  public:
-  Fiber(std::function<void()> cb, size_t stacksize = 0);
+  Fiber(std::function<void()> cb, size_t stacksize = 0, bool use_caller = false);
   ~Fiber();
 
   //重置协程函数，并重置状态
@@ -31,6 +34,10 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
   void swapIn();
   // 把当前协程切换到后台
   void swapOut();
+
+  void call();
+  void back();
+
   u_int64_t getId() const { return m_id; }
 
   State getState() { return m_state; }
@@ -47,6 +54,7 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
   static u_int64_t TotalFibers();
 
   static void MainFunc();
+  static void CallerMainFunc();
   static u_int64_t GetFiberId();
 
  private:
