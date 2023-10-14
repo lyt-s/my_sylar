@@ -23,6 +23,7 @@ static std::atomic<u_int64_t> s_fiber_id{0};
 static std::atomic<u_int64_t> s_fiber_count{0};
 
 static thread_local Fiber *t_fiber = nullptr;
+
 static thread_local Fiber::ptr t_threadFiber = nullptr;
 
 static ConfigVar<u_int32_t>::ptr g_fiber_stack_size =
@@ -112,9 +113,11 @@ void Fiber::reset(std::function<void()> cb) {
   m_state = INIT;
 }
 
+// 强行把当前线程置换成目标线程
 void Fiber::call() {
   SetThis(this);
   m_state = EXEC;
+  // 和swapIn 的区别？？
   if (swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
     SYLAR_ASSERT2(false, "swapcontext");
   }
@@ -132,29 +135,23 @@ void Fiber::swapIn() {
   SetThis(this);
   SYLAR_ASSERT(m_state != EXEC);
   m_state = EXEC;
+  // 取当前协程的主协程，自己swap自己，会死锁，所以建立了call
   if (swapcontext(&Scheduler::GetMainFiber()->m_ctx, &m_ctx)) {
     SYLAR_ASSERT2(false, "swapcontext");
   }
 }
 // 把当前协程切换到后台,main协程换出来
 void Fiber::swapOut() {
-  if (this != Scheduler::GetMainFiber()) {
-    SetThis(Scheduler::GetMainFiber());
-    if (swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)) {
-      SYLAR_ASSERT2(false, "swapcontext");
-    } else {
-      SetThis(t_threadFiber.get());
-      if (swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
-        SYLAR_ASSERT2(false, "swapcontext")
-      }
-    }
+  SetThis(Scheduler::GetMainFiber());
+  if (swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)) {
+    SYLAR_ASSERT2(false, "swapcontext");
   }
-  // if (swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)) {
-  //   SYLAR_ASSERT2(false, "swapcontext");
-  // }
 }
 
+//设置当前协程
 void Fiber::SetThis(Fiber *f) { t_fiber = f; }
+
+// 返回当前协程
 sylar::Fiber::ptr Fiber::GetThis() {
   if (t_fiber) {
     return t_fiber->shared_from_this();
@@ -236,3 +233,8 @@ void Fiber::CallerMainFunc() {
   SYLAR_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
 }  // namespace sylar
+
+// 导致进不去run，同时协程f一直没有该变state，
+// 就报错了这里原因的本质是协程调度器管理的主协程s和创建协程时候设置的主协程f不一致造成的所以如果用swapin,
+// 就把当前f的上下文存入了s，再执行s，此时f和s其实是一样的
+// 此时f和s都是创建协程时候设置的主协程f，协程管理器设置的s其实被f覆盖了

@@ -15,6 +15,11 @@
 namespace sylar {
 
 /**
+ * 1. 线程池，分配一组线程
+ * 2. 协程调度器，将协程指定到相应的线程上去执行
+ */
+
+/**
  * @brief 协程调度器
  * @details 封装的是N-M的协程调度器
  *          内部有一个线程池,支持协程在线程池里面切换
@@ -27,8 +32,8 @@ class Scheduler {
   /**
    * @brief 构造函数
    * @param[in] threads 线程数量
-   * @param[in] use_caller 是否使用当前调用线程
-   * @param[in] name 协程调度器名称
+   * @param[in] use_caller 是否使用当前调用线程，true的话就会纳入到调度中
+   * @param[in] name 协程调度器名称，线程池名称，
    */
   Scheduler(size_t threads = 1, bool use_caller = true, const std::string &name = "");
 
@@ -48,17 +53,17 @@ class Scheduler {
   static Scheduler *GetThis();
 
   /**
-   * @brief 返回当前协程调度器的调度协程
+   * @brief 返回当前协程调度器的调度协程，---主协程
    */
   static Fiber *GetMainFiber();
 
   /**
-   * @brief 启动协程调度器
+   * @brief 启动协程调度器，线程池
    */
   void start();
 
   /**
-   * @brief 停止协程调度器
+   * @brief 停止协程调度器，线程池
    */
   void stop();
 
@@ -75,6 +80,7 @@ class Scheduler {
       need_tickle = scheduleNoLock(fc, thread);
     }
 
+    // 待执行队列为空时，然后添加了一个带执行的任务， 则执行下面语句，具体细节查看scheduleNoLock
     if (need_tickle) {
       tickle();
     }
@@ -91,6 +97,7 @@ class Scheduler {
     {
       MutexType::Lock lock(m_mutex);
       while (begin != end) {
+        // 参数为指针，取得是地址，会将里面的东西 swap掉。---这里怎么确认是callback还是fiber？？
         need_tickle = scheduleNoLock(&*begin, -1) || need_tickle;
         ++begin;
       }
@@ -140,11 +147,13 @@ class Scheduler {
    */
   template <class FiberOrCb>
   bool scheduleNoLock(FiberOrCb fc, int thread) {
-    bool need_tickle = m_fibers.empty();
+    bool need_tickle = m_fibers.empty();  // true = 空的待执行队列
     FiberAndThread ft(fc, thread);
+    // 是协程或者function
     if (ft.fiber || ft.cb) {
       m_fibers.push_back(ft);
     }
+    // 以前是空的，加上一个后不为空了，我就需要唤醒线程，有任务来了
     return need_tickle;
   }
 
@@ -157,7 +166,7 @@ class Scheduler {
     Fiber::ptr fiber;
     /// 协程执行函数
     std::function<void()> cb;
-    /// 线程id
+    /// 线程id，---需要指定协程在哪一个线程上执行
     int thread;
 
     /**
@@ -171,7 +180,7 @@ class Scheduler {
      * @brief 构造函数
      * @param[in] f 协程指针
      * @param[in] thr 线程id
-     * @post *f = nullptr
+     * @post *f = nullptr---swap  todo
      */
     FiberAndThread(Fiber::ptr *f, int thr) : thread(thr) { fiber.swap(*f); }
 
@@ -192,6 +201,7 @@ class Scheduler {
 
     /**
      * @brief 无参构造函数
+     * stl 中一定需要默认构造函数
      */
     FiberAndThread() : thread(-1) {}
 
@@ -226,7 +236,7 @@ class Scheduler {
   std::atomic<size_t> m_activeThreadCount = {0};
   /// 空闲线程数量
   std::atomic<size_t> m_idleThreadCount = {0};
-  /// 是否正在停止
+  /// 用来表示Scheduler::start()是否启动，默认表示未启动
   bool m_stopping = true;
   /// 是否自动停止
   bool m_autoStop = false;

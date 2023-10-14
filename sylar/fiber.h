@@ -19,7 +19,20 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
  public:
   friend class Scheduler;
   typedef std::shared_ptr<Fiber> ptr;
-  enum State { INIT, HOLD, EXEC, TERM, READY, EXCEPT };
+  enum State {
+    /// 初始化状态
+    INIT,
+    /// 暂停状态
+    HOLD,
+    /// 执行中状态
+    EXEC,
+    /// 结束状态
+    TERM,
+    /// 可执行状态
+    READY,
+    /// 异常状态
+    EXCEPT
+  };
 
  private:
   Fiber();
