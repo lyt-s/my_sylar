@@ -88,6 +88,7 @@ void Scheduler::start() {
 
   // if (m_rootFiber) {
   //   // m_rootFiber->swapIn();
+  //  切换到run方法中去
   //   m_rootFiber->call();
   //   SYLAR_LOG_INFO(g_logger) << "call out";
   // }
@@ -134,6 +135,7 @@ void Scheduler::stop() {
     tickle();
   }
 
+  // 协程调度器使用当前线程
   if (m_rootFiber) {
     // while (!stopping()) {
     //   if (m_rootFiber->getState() == Fiber::TERM || m_rootFiber->getState() == Fiber::EXCEPT) {
@@ -154,6 +156,7 @@ void Scheduler::stop() {
     thrs.swap(m_threads);
   }
 
+  // 所有线程 join
   for (auto &i : thrs) {
     i->join();
   }
@@ -200,6 +203,7 @@ void Scheduler::run() {
   while (true) {
     ft.reset();
     bool tickle_me = false;
+    // 防止协程调度结束
     bool is_active = false;
     // 协程的消息队列中，取出一个协程任务
     {

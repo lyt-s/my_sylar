@@ -115,9 +115,10 @@ void Fiber::reset(std::function<void()> cb) {
 
 // 强行把当前线程置换成目标线程
 void Fiber::call() {
+  // bug
   SetThis(this);
   m_state = EXEC;
-  // 和swapIn 的区别？？
+  // 和swapIn 的区别？？  真正的主协程？？
   if (swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
     SYLAR_ASSERT2(false, "swapcontext");
   }
@@ -130,16 +131,19 @@ void Fiber::back() {
     SYLAR_ASSERT2(false, "swapcontext");
   }
 }
+
 // 切换到当前协程执行
 void Fiber::swapIn() {
   SetThis(this);
   SYLAR_ASSERT(m_state != EXEC);
   m_state = EXEC;
   // 取当前协程的主协程，自己swap自己，会死锁，所以建立了call
+  // 这里的GetMainFiber--->是指向run函数的那个fiber
   if (swapcontext(&Scheduler::GetMainFiber()->m_ctx, &m_ctx)) {
     SYLAR_ASSERT2(false, "swapcontext");
   }
 }
+
 // 把当前协程切换到后台,main协程换出来
 void Fiber::swapOut() {
   SetThis(Scheduler::GetMainFiber());
@@ -179,6 +183,7 @@ void Fiber::YieldToHold() {
 // 总协程数
 u_int64_t Fiber::TotalFibers() { return s_fiber_count; }
 
+// 线程的主协程不会进入到MainFunc中
 void Fiber::MainFunc() {
   Fiber::ptr cur = GetThis();
   SYLAR_ASSERT(cur);
@@ -228,6 +233,7 @@ void Fiber::CallerMainFunc() {
   // to do  为什么协程未释放指针，引用计数不小于1
   auto raw_ptr = cur.get();
   cur.reset();
+  // 和MianFunc的区别
   raw_ptr->back();
 
   SYLAR_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));

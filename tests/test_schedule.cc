@@ -12,12 +12,13 @@ void test_fiber() {
 
   sleep(1);
   if (--s_count >= 0) {
-    sylar::Scheduler::GetThis()->schedule(&test_fiber);
+    // 在指定线程执行
+    sylar::Scheduler::GetThis()->schedule(&test_fiber, sylar::GetThreadId());
   }
 }
 int main() {
   SYLAR_LOG_INFO(g_logger) << "main";
-  sylar::Scheduler sc(3, false, "test");
+  sylar::Scheduler sc(3, true, "test");
   sc.start();
   sleep(2);
   SYLAR_LOG_INFO(g_logger) << "schedule";
