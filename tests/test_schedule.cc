@@ -22,6 +22,7 @@ int main() {
   sc.start();
   sleep(2);
   SYLAR_LOG_INFO(g_logger) << "schedule";
+  // 添加任务
   sc.schedule(&test_fiber);
   sc.stop();
   SYLAR_LOG_INFO(g_logger) << "over";

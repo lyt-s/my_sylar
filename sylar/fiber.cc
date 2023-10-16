@@ -23,10 +23,10 @@ static std::atomic<u_int64_t> s_fiber_id{0};
 /// 全局静态变量，用于统计当前的协程数
 static std::atomic<u_int64_t> s_fiber_count{0};
 
-/// 线程局部变量，当前线程正在运行的协程
+/// 线程局部变量，每个线程独有一份，当前线程正在运行的协程
 static thread_local Fiber *t_fiber = nullptr;
-/// 线程局部变量，当前线程的主协程，切换到这个协程，就相当于切换到了主线程中运行，智能指针形式
 
+/// 线程局部变量，每个线程独有一份，当前线程的主协程，切换到这个协程，就相当于切换到了主协程中运行，智能指针形式
 static thread_local Fiber::ptr t_threadFiber = nullptr;
 
 static ConfigVar<u_int32_t>::ptr g_fiber_stack_size =
@@ -51,12 +51,14 @@ u_int64_t Fiber::GetFiberId() {
 //
 Fiber::Fiber() {
   m_state = EXEC;
+  // 设置当前正在运行的协程
   SetThis(this);
 
   if (getcontext(&m_ctx)) {
     SYLAR_ASSERT2(false, "getcontext");
-    ++s_fiber_count;
   }
+
+  ++s_fiber_count;
 
   SYLAR_LOG_DEBUG(g_logger) << "Fiber::Fiber main";
 }
@@ -116,12 +118,12 @@ void Fiber::reset(std::function<void()> cb) {
   m_state = INIT;
 }
 
-// 强行把当前线程置换成目标线程
+// 将执行run的线程换出，换为main函数中的主协程执行
 void Fiber::call() {
   // bug
   SetThis(this);
   m_state = EXEC;
-  // 和swapIn 的区别？？  真正的主协程？？
+  // 和swapIn 的区别？？  线程中的主协程-->t_threadFiber
   if (swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
     SYLAR_ASSERT2(false, "swapcontext");
   }
@@ -147,7 +149,7 @@ void Fiber::swapIn() {
   }
 }
 
-// 把当前协程切换到后台,main协程换出来
+// 把当前协程切换到后台,调度协程换出来
 void Fiber::swapOut() {
   SetThis(Scheduler::GetMainFiber());
   if (swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)) {
@@ -158,7 +160,13 @@ void Fiber::swapOut() {
 //设置当前协程
 void Fiber::SetThis(Fiber *f) { t_fiber = f; }
 
-// 返回当前协程
+/**
+ * @brief 返回当前线程正在执行的协程
+ * @details 如果当前线程还未创建协程，则创建线程的第一个协程，
+ * 且该协程为当前线程的主协程，其他协程都通过这个协程来调度，也就是说，其他协程
+ * 结束时,都要切回到主协程，由主协程重新选择新的协程进行resume
+ * @attention 线程如果要创建协程，那么应该首先执行一下Fiber::GetThis()操作，以初始化主函数协程
+ */
 sylar::Fiber::ptr Fiber::GetThis() {
   if (t_fiber) {
     return t_fiber->shared_from_this();
@@ -170,6 +178,7 @@ sylar::Fiber::ptr Fiber::GetThis() {
 }
 
 // 协程切换到后台，并且设置为Ready状态
+// 半路yield的协程没有执行完时，这种yield调度器会再次将协程加入任务队列并等待调度，
 void Fiber::YieldToReady() {
   Fiber::ptr cur = GetThis();
   SYLAR_ASSERT(cur->m_state == EXEC);
@@ -189,7 +198,7 @@ u_int64_t Fiber::TotalFibers() { return s_fiber_count; }
 
 // 线程的主协程不会进入到MainFunc中
 void Fiber::MainFunc() {
-  Fiber::ptr cur = GetThis();
+  Fiber::ptr cur = GetThis();  // GetThis()的shared_from_this()方法让引用计数加1
   SYLAR_ASSERT(cur);
   try {
     cur->m_cb();
@@ -207,16 +216,15 @@ void Fiber::MainFunc() {
                               << sylar::BacktraceToString();
   }
 
-  // to do  为什么协程未释放指针，引用计数不小于1
-  auto raw_ptr = cur.get();
+  auto raw_ptr = cur.get();  // 手动让t_fiber的引用计数减1
   cur.reset();
-  raw_ptr->swapOut();
+  raw_ptr->swapOut();  // 协程结束时自动swapOut，以回到主协程(调度协程)
 
   SYLAR_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
 
 void Fiber::CallerMainFunc() {
-  Fiber::ptr cur = GetThis();
+  Fiber::ptr cur = GetThis();  // GetThis()的shared_from_this()方法让引用计数加1
   SYLAR_ASSERT(cur);
   try {
     cur->m_cb();
@@ -234,11 +242,10 @@ void Fiber::CallerMainFunc() {
                               << sylar::BacktraceToString();
   }
 
-  // to do  为什么协程未释放指针，引用计数不小于1
-  auto raw_ptr = cur.get();
+  auto raw_ptr = cur.get();  // 手动让t_fiber的引用计数减1
   cur.reset();
   // 和MianFunc的区别
-  raw_ptr->back();
+  raw_ptr->back();  // 协程结束时自动swapOut，这里回到主线程的主协程
 
   SYLAR_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
