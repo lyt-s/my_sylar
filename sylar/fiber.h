@@ -58,6 +58,14 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
  public:
   // 设置当前协程
   static void SetThis(Fiber *f);
+
+  /**
+   * @brief 返回当前线程正在执行的协程
+   * @details 如果当前线程还未创建协程，则创建线程的第一个协程，
+   * 且该协程为当前线程的主协程，其他协程都通过这个协程来调度，也就是说，其他协程
+   * 结束时,都要切回到主协程，由主协程重新选择新的协程进行resume
+   * @attention 线程如果要创建协程，那么应该首先执行一下Fiber::GetThis()操作，以初始化主函数协程
+   */
   static sylar::Fiber::ptr GetThis();
   // 协程切换到后台，并且设置为Ready状态
   static void YieldToReady();

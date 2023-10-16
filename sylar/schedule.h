@@ -239,6 +239,7 @@ class Scheduler {
   /// 用来表示Scheduler::start()是否启动，默认表示未启动
   bool m_stopping = true;
   /// 是否自动停止
+  // 这个标志会使得调度器在调度完所有任务后自动退出。
   bool m_autoStop = false;
   /// 主线程id(use_caller)
   int m_rootThread = 0;

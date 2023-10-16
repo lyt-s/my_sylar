@@ -15,11 +15,11 @@ namespace sylar {
 // 库的函数功能都放到system中
 static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
-// 线程局部变量
+// 线程局部变量，调度器
 static thread_local Scheduler *t_scheduler = nullptr;
 
-// 主协程函数
-static thread_local Fiber *t_fiber = nullptr;
+// 主协程函数 --->保存当前线程的调度协程
+static thread_local Fiber *t_scheduler_fiber = nullptr;
 
 Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name) : m_name(name) {
   // 首先输入的线程要大于0
@@ -36,13 +36,13 @@ Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name) :
     SYLAR_ASSERT(Scheduler::GetThis() == nullptr);
     t_scheduler = this;
 
-    // ??
+    // m_rootFiber是调度协程
     m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0, true));
     sylar::Thread::SetName(m_name);  // 修改线程名称
 
     // 在一个线程内声明一个调度器，在将当前线程放入调度器内，他的主协程就不是线程的主协程
     // ，而是执行run方法的主协程 主协程。 ？？？ todo
-    t_fiber = m_rootFiber.get();
+    t_scheduler_fiber = m_rootFiber.get();
     m_rootThread = sylar::GetThreadId();
     m_threadIds.push_back(m_rootThread);
   } else {
@@ -59,11 +59,12 @@ Scheduler::~Scheduler() {
   }
 }
 
+// 用于获取当前线程的调度器的调度协程
 // static thread_local Scheduler *t_scheduler = nullptr;
 Scheduler *Scheduler::GetThis() { return t_scheduler; }
 
-// 主协程 static thread_local Fiber *t_fiber = nullptr;
-Fiber *Scheduler::GetMainFiber() { return t_fiber; }
+// 主协程 static thread_local Fiber *t_scheduler_fiber = nullptr;
+Fiber *Scheduler::GetMainFiber() { return t_scheduler_fiber; }
 
 // 启动线程池
 void Scheduler::start() {
@@ -99,7 +100,7 @@ void Scheduler::start() {
 void Scheduler::stop() {
   // 两种情况
   // 一种是用了 use_caller。 -- 必须要去创建schedule的哪个线程去执行stop
-  // 一种是未使用， 非他自己线程的任意线程
+  // 一种是未使用， 对应额外创建一个线程进行协程调度、main函数线程不参与调度的情况。
   m_autoStop = true;
   // m_rootFiber是指创建schedule方法的线程中的协程的里面的执行run的那个协程-->调度协程;
   // TERM --->结束状态, INIT---> 初始化状态
@@ -142,7 +143,7 @@ void Scheduler::stop() {
     //     m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0, true));
     //     SYLAR_LOG_INFO(g_logger) << "root fiber is term, reset";
     //     // bug
-    //     t_fiber = m_rootFiber.get();
+    //     t_scheduler_fiber = m_rootFiber.get();
     //   }
     //   m_rootFiber->call();
     if (!stopping()) {
@@ -192,7 +193,7 @@ void Scheduler::run() {
   // 如果当前线程id != 主协程id
   if (sylar::GetThreadId() != m_rootThread) {
     // 就将主fiber 设置为当前线程id
-    t_fiber = Fiber::GetThis().get();
+    t_scheduler_fiber = Fiber::GetThis().get();
   }
 
   Fiber::ptr idle_fiber(new Fiber(std::bind(&Scheduler::idle, this)));
