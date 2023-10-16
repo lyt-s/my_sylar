@@ -33,6 +33,10 @@ class IOManger : public Scheduler {
       std::function<void()> cb;  // 时间的回调函数
     };
 
+    EventContext &getContext(Event event);
+    void resetContext(EventContext &ctx);
+    void triggerEvent(Event event);
+
     EventContext read;      // 读事件
     EventContext write;     // 写事件
     int fd;                 // 事件关联的句柄
