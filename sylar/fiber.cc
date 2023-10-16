@@ -15,11 +15,14 @@
 namespace sylar {
 
 static Logger::ptr g_logger = SYLAR_LOG_NAME("system");
-
+/// 全局静态变量，用于生成协程id
 static std::atomic<u_int64_t> s_fiber_id{0};
+/// 全局静态变量，用于统计当前的协程数
 static std::atomic<u_int64_t> s_fiber_count{0};
 
+/// 线程局部变量，当前线程正在运行的协程
 static thread_local Fiber *t_fiber = nullptr;
+/// 线程局部变量，当前线程的主协程，切换到这个协程，就相当于切换到了主线程中运行，智能指针形式
 static thread_local Fiber::ptr t_threadFiber = nullptr;
 
 static ConfigVar<u_int32_t>::ptr g_fiber_stack_size =
@@ -120,6 +123,7 @@ void Fiber::swapOut() {
 }
 
 void Fiber::SetThis(Fiber *f) { t_fiber = f; }
+
 sylar::Fiber::ptr Fiber::GetThis() {
   if (t_fiber) {
     return t_fiber->shared_from_this();
@@ -129,12 +133,14 @@ sylar::Fiber::ptr Fiber::GetThis() {
   t_threadFiber = main_fiber;
   return t_fiber->shared_from_this();
 }
+
 // 协程切换到后台，并且设置为Ready状态
 void Fiber::YieldToReady() {
   Fiber::ptr cur = GetThis();
   cur->m_state = READY;
   cur->swapOut();
 }
+
 // 协程切换到后台，并且设置为Hold状态
 void Fiber::YieldToHold() {
   Fiber::ptr cur = GetThis();
