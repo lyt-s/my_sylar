@@ -15,7 +15,7 @@ namespace sylar {
 // 库的函数功能都放到system中
 static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
-// 线程局部变量，调度器
+//  当前线程的调度器，同一个调度器下的所有线程指同同一个调度器实例
 static thread_local Scheduler *t_scheduler = nullptr;
 
 // 主协程函数 --->保存当前线程的调度协程
@@ -40,8 +40,8 @@ Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name) :
     m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0, true));
     sylar::Thread::SetName(m_name);  // 修改线程名称
 
-    // 在一个线程内声明一个调度器，在将当前线程放入调度器内，他的主协程就不是线程的主协程
-    // ，而是执行run方法的主协程 主协程。 ？？？ todo
+    // 在一个线程内声明一个调度器，在将当前线程放入调度器内，main函数的主协程不是调度协程，
+    // 调度协程是执行run方法的协程。
     t_scheduler_fiber = m_rootFiber.get();
     m_rootThread = sylar::GetThreadId();
     m_threadIds.push_back(m_rootThread);
@@ -99,7 +99,7 @@ void Scheduler::start() {
 // 线程没事做时，需要循环等待，stop就是做一个等的动作
 void Scheduler::stop() {
   // 两种情况
-  // 一种是用了 use_caller。 -- 必须要去创建schedule的哪个线程去执行stop
+  // 一种是用了 use_caller。 -- 必须要去创建schedule的哪个线程去执行stop。
   // 一种是未使用， 对应额外创建一个线程进行协程调度、main函数线程不参与调度的情况。
   m_autoStop = true;
   // m_rootFiber是指创建schedule方法的线程中的协程的里面的执行run的那个协程-->调度协程;
@@ -109,8 +109,13 @@ void Scheduler::stop() {
     SYLAR_LOG_INFO(g_logger) << this << "stopped";
     // 此时已结束，或者未跑起来，那么我们就要设置结束
     m_stopping = true;
+    // 自己写的bug
+    // if (m_stopping) {
+    //   return;
+    // }
+
     // use_caller 并且只有一个线程的时候，从这里返回
-    if (m_stopping) {
+    if (stopping()) {
       return;
     }
   }
@@ -136,7 +141,7 @@ void Scheduler::stop() {
     tickle();
   }
 
-  // 协程调度器使用当前线程
+  /// 在use caller情况下，调度器协程结束时，应该返回caller协程
   if (m_rootFiber) {
     // while (!stopping()) {
     //   if (m_rootFiber->getState() == Fiber::TERM || m_rootFiber->getState() == Fiber::EXCEPT) {
@@ -148,6 +153,7 @@ void Scheduler::stop() {
     //   m_rootFiber->call();
     if (!stopping()) {
       m_rootFiber->call();
+      SYLAR_LOG_DEBUG(g_logger) << "m_rootFiber end";
     }
   }
 
@@ -190,9 +196,11 @@ void Scheduler::idle() {
 void Scheduler::run() {
   // 设置当前的协程调度器
   setThis();
-  // 如果当前线程id != 主协程id
+  // 如果当前线程id != 主线程id
+  // 这里m_rootThread指的是user_caller的线程，user_caller线程需要特殊处理
+  // 除了user_caller线程的其他线程在执行run时，都要将执行run的协程设置为主协程(调度协程)
   if (sylar::GetThreadId() != m_rootThread) {
-    // 就将主fiber 设置为当前线程id
+    // Fiber::GetThis() 如果当前线程还未创建协程，则创建线程的第一个协程。
     t_scheduler_fiber = Fiber::GetThis().get();
   }
 
@@ -253,7 +261,7 @@ void Scheduler::run() {
       if (ft.fiber->getState() == Fiber::READY) {
         schedule(ft.fiber);
       } else if (ft.fiber->getState() != Fiber::TERM && ft.fiber->getState() != Fiber::EXCEPT) {
-        // 设置暂停状态，除了上面的判断的语句外，除了ready， 就是hold状态？？
+        // 设置暂停状态，除了上面的判断的语句外，除了ready， 就是hold状态
         ft.fiber->m_state = Fiber::HOLD;
       }
       // FiberAndThread::reset

@@ -123,7 +123,7 @@ void Fiber::call() {
   // bug
   SetThis(this);
   m_state = EXEC;
-  // 和swapIn 的区别？？  线程中的主协程-->t_threadFiber
+  // 和swapIn 的区别---> main函数中的主协程-->t_threadFiber
   if (swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
     SYLAR_ASSERT2(false, "swapcontext");
   }
@@ -201,7 +201,7 @@ void Fiber::MainFunc() {
   Fiber::ptr cur = GetThis();  // GetThis()的shared_from_this()方法让引用计数加1
   SYLAR_ASSERT(cur);
   try {
-    cur->m_cb();
+    cur->m_cb();  // 这里真正执行协程的入口函数
     cur->m_cb = nullptr;
     cur->m_state = TERM;
   } catch (std::exception &ex) {
@@ -227,7 +227,7 @@ void Fiber::CallerMainFunc() {
   Fiber::ptr cur = GetThis();  // GetThis()的shared_from_this()方法让引用计数加1
   SYLAR_ASSERT(cur);
   try {
-    cur->m_cb();
+    cur->m_cb();  // 这里真正执行协程的入口函数
     cur->m_cb = nullptr;
     cur->m_state = TERM;
   } catch (std::exception &ex) {
@@ -250,8 +250,3 @@ void Fiber::CallerMainFunc() {
   SYLAR_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
 }  // namespace sylar
-
-// 导致进不去run，同时协程f一直没有该变state，
-// 就报错了这里原因的本质是协程调度器管理的主协程s和创建协程时候设置的主协程f不一致造成的所以如果用swapin,
-// 就把当前f的上下文存入了s，再执行s，此时f和s其实是一样的
-// 此时f和s都是创建协程时候设置的主协程f，协程管理器设置的s其实被f覆盖了
