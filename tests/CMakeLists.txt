@@ -55,3 +55,12 @@ target_include_directories(test_schedule PRIVATE  ${CMAKE_SOURCE_DIR}
 
 
 target_link_libraries(test_schedule PRIVATE pthread sylar ${Boost_LIBRARIES})
+#----test-----------------------------------------------------------------------
+add_executable(test_iomanager test_iomanager.cc)
+
+target_include_directories(test_iomanager PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+
+target_link_libraries(test_iomanager PRIVATE pthread sylar ${Boost_LIBRARIES})

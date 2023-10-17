@@ -26,6 +26,7 @@ set(LIB_SRC
     sylar/util.cc
     sylar/thread.cc
     sylar/schedule.cc
+    sylar/iomanager.cc
     )
 
 add_library(sylar SHARED ${LIB_SRC})

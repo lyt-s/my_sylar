@@ -12,15 +12,15 @@
 #include "schedule.h"
 #include "thread.h"
 namespace sylar {
-class IOManger : public Scheduler {
+class IOManager : public Scheduler {
  public:
-  typedef std::shared_ptr<IOManger> ptr;
+  typedef std::shared_ptr<IOManager> ptr;
   typedef RWMutex RWMutexType;
 
   enum Event {
     NONE = 0x0,
-    READ = 0x1,
-    WRITE = 0x2,
+    READ = 0x1,   // EPOLLIN
+    WRITE = 0x4,  // EPOLLOUT
 
   };
 
@@ -39,14 +39,14 @@ class IOManger : public Scheduler {
 
     EventContext read;      // 读事件
     EventContext write;     // 写事件
-    int fd;                 // 事件关联的句柄
+    int fd = 0;             // 事件关联的句柄
     Event m_events = NONE;  // 已经注册的事件
-    MutexType m_mutex;
+    MutexType mutex;
   };
 
  public:
-  IOManger(size_t threads = 1, bool use_caller = true, const std::string &name = " ");
-  ~IOManger();
+  IOManager(size_t threads = 1, bool use_caller = true, const std::string &name = " ");
+  ~IOManager();
 
   int addEvent(int fd, Event event, std::function<void()> cb = nullptr);
   bool delEvent(int fd, Event event);
@@ -54,11 +54,11 @@ class IOManger : public Scheduler {
 
   bool cancelAll(int fd);
 
-  static IOManger *GetThis();
+  static IOManager *GetThis();
 
  protected:
   void tickle() override;
-
+  // 协程调度是否应该终止
   bool stopping() override;
 
   void idle() override;

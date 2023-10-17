@@ -110,7 +110,7 @@ void Scheduler::stop() {
     // 此时已结束，或者未跑起来，那么我们就要设置结束
     m_stopping = true;
     // use_caller 并且只有一个线程的时候，从这里返回
-    if (m_stopping) {
+    if (stopping()) {
       return;
     }
   }
@@ -297,6 +297,7 @@ void Scheduler::run() {
       // fiber已经结束，直接break
       if (idle_fiber->getState() == Fiber::TERM) {
         SYLAR_LOG_INFO(g_logger) << "idle fiber term";
+        // tickle();
         break;
       }
 
