@@ -27,9 +27,9 @@ target_include_directories(test_thread PRIVATE  ${CMAKE_SOURCE_DIR}
 
 target_link_libraries(test_thread PRIVATE pthread sylar ${Boost_LIBRARIES}
 ${yaml-cpp_LIBRARIES})
-#----test_lexical_cast---------------------------------------------------------------------------
+#----test_lexical_cast----------------------------------------------------------
 add_executable(test_lexical_cast test_lexical_cast.cc)
-
+force_redefine_file_macro_for_sources(test_lexical_cast) #__FILE__
 target_include_directories(test_lexical_cast PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
@@ -37,9 +37,9 @@ target_include_directories(test_lexical_cast PRIVATE  ${CMAKE_SOURCE_DIR}
 
 target_link_libraries(test_lexical_cast PRIVATE pthread sylar ${Boost_LIBRARIES})
 
-#----test_thread----------------------------------------------------------------
+#----test_fiber-----------------------------------------------------------------
 add_executable(test_fiber test_fiber.cc)
-
+force_redefine_file_macro_for_sources(test_fiber) #__FILE__
 target_include_directories(test_fiber PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
@@ -48,7 +48,7 @@ target_include_directories(test_fiber PRIVATE  ${CMAKE_SOURCE_DIR}
 target_link_libraries(test_fiber PRIVATE pthread sylar ${Boost_LIBRARIES})
 #----test-----------------------------------------------------------------------
 add_executable(test_schedule test_schedule.cc)
-
+force_redefine_file_macro_for_sources(test_schedule) #__FILE__
 target_include_directories(test_schedule PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
