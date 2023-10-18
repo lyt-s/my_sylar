@@ -26,7 +26,7 @@ void test_fiber() {
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_port = htons(80);
-  inet_pton(AF_INET, "39.156.66.18", &addr.sin_addr.s_addr);
+  inet_pton(AF_INET, "10.252.1.24", &addr.sin_addr.s_addr);
 
   if (!connect(sock, (const sockaddr *)&addr, sizeof(addr))) {
   } else if (errno == EINPROGRESS) {
@@ -43,10 +43,6 @@ void test_fiber() {
   } else {
     SYLAR_LOG_INFO(g_logger) << "else" << errno << " " << strerror(errno);
   }
-  //   iom.addEvent(sock, sylar::IOManger::READ, []() { SYLAR_LOG_INFO(g_logger) << "connected"; });
-
-  //   iom.addEvent(sock, sylar::IOManger::WRITE, []() { SYLAR_LOG_INFO(g_logger) << "connected";
-  //   });}
 }
 void test_one() {
   std::cout << "EPOLLIN= " << EPOLLIN;
