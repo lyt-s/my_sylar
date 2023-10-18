@@ -7,12 +7,14 @@
 #include <memory>
 #include <string>
 #include <vector>
+
 #include "config.h"
 #include "fiber.h"
 #include "schedule.h"
 #include "thread.h"
+#include "timer.h"
 namespace sylar {
-class IOManager : public Scheduler {
+class IOManager : public Scheduler, public TimerManager {
  public:
   typedef std::shared_ptr<IOManager> ptr;
   typedef RWMutex RWMutexType;
@@ -60,8 +62,8 @@ class IOManager : public Scheduler {
   void tickle() override;
   // 协程调度是否应该终止
   bool stopping() override;
-
   void idle() override;
+  void onTimerInsertAtFront() override;
 
   void contextResize(size_t size);
 

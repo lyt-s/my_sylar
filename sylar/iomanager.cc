@@ -7,8 +7,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <functional>
 #include <memory>
+#include <vector>
 
 #include "fiber.h"
 #include "log.h"
@@ -70,7 +73,8 @@ IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
   rt = epoll_ctl(m_epfd, EPOLL_CTL_ADD, m_tickleFds[0], &event);
   SYLAR_ASSERT(!rt);
 
-  m_fdContexts.resize(64);
+  // m_fdContexts.resize(64);
+  contextResize(32);
 
   start();
 }
@@ -112,7 +116,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     fd_ctx = m_fdContexts[fd];
   }
 
-  FdContext::MutexType::Lock lock2(fd_ctx->mutex);
+  IOManager::FdContext::MutexType::Lock lock2(fd_ctx->mutex);
   if (fd_ctx->m_events & event) {
     SYLAR_LOG_ERROR(g_logger) << "addEvent assert fd = " << fd << "event= " << event
                               << "fd_ctx->m_events=" << fd_ctx->m_events;
@@ -260,7 +264,7 @@ void IOManager::tickle() {
   SYLAR_ASSERT(rt == 1);
 }
 
-bool IOManager::stopping() { return Scheduler::stopping() && m_pendingEventCount == 0; }
+bool IOManager::stopping() { return m_pendingEventCount == 0 && Scheduler::stopping(); }
 
 // 核心
 void IOManager::idle() {
@@ -272,15 +276,25 @@ void IOManager::idle() {
   });
 
   while (true) {
+    uint64_t next_timeout = 0;
     if (stopping()) {
-      SYLAR_LOG_INFO(g_logger) << "name=" << getName() << "idle stopping exit";
-      break;
+      //获得当前的时间
+      next_timeout = getNextTimer();
+      if (next_timeout == ~0ull) {
+        SYLAR_LOG_INFO(g_logger) << "name=" << getName() << "idle stopping exit";
+        break;
+      }
     }
 
     int rt = 0;
     do {
-      static const int MAX_TIMEOUT = 5000;
-      rt = epoll_wait(m_epfd, events, 64, MAX_TIMEOUT);
+      static const int MAX_TIMEOUT = 1000;
+      if (next_timeout != ~0ull) {
+        next_timeout = static_cast<int>(next_timeout) > MAX_TIMEOUT ? MAX_TIMEOUT : next_timeout;
+      } else {
+        next_timeout = MAX_TIMEOUT;
+      }
+      rt = epoll_wait(m_epfd, events, 64, static_cast<int>(next_timeout));
 
       if (rt < 0 && errno == EINTR) {
       } else {
@@ -288,7 +302,14 @@ void IOManager::idle() {
       }
     } while (true);
 
-    // rt不能用？
+    std::vector<std::function<void()>> cbs;
+    listExpiredCb(cbs);
+
+    if (!cbs.empty()) {
+      schedule(cbs.begin(), cbs.end());
+      cbs.clear();
+    }
+
     for (int i = 0; i < rt; ++i) {
       epoll_event &event = events[i];
       // SYLAR_LOG_INFO(g_logger) << event.data.fd;
@@ -349,4 +370,5 @@ void IOManager::idle() {
   }
 }
 
+void IOManager::onTimerInsertAtFront() { tickle(); }
 }  // namespace sylar
