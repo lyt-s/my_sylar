@@ -38,8 +38,8 @@ void IOManager::FdContext::resetContext(IOManager::FdContext::EventContext &ctx)
   ctx.cb = nullptr;
 }
 void IOManager::FdContext::triggerEvent(IOManager::Event event) {
-  SYLAR_ASSERT(m_events & event);
-  m_events = (Event)(m_events & ~event);
+  SYLAR_ASSERT(events & event);
+  events = (Event)(events & ~event);
   EventContext &ctx = getContext(event);
 
   if (ctx.cb) {
@@ -73,9 +73,10 @@ IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
   rt = epoll_ctl(m_epfd, EPOLL_CTL_ADD, m_tickleFds[0], &event);
   SYLAR_ASSERT(!rt);
 
-  // m_fdContexts.resize(64);
-  contextResize(32);
+  // m_fdContexts.resize(64); bug
+  contextResize(64);
 
+  // 这里直接开启了Schedluer，也就是说IOManager创建即可调度协程
   start();
 }
 
@@ -116,15 +117,15 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     fd_ctx = m_fdContexts[fd];
   }
 
-  IOManager::FdContext::MutexType::Lock lock2(fd_ctx->mutex);
-  if (fd_ctx->m_events & event) {
+  FdContext::MutexType::Lock lock2(fd_ctx->mutex);
+  if (fd_ctx->events & event) {
     SYLAR_LOG_ERROR(g_logger) << "addEvent assert fd = " << fd << "event= " << event
-                              << "fd_ctx->m_events=" << fd_ctx->m_events;
-    SYLAR_ASSERT(!(fd_ctx->m_events & event));
+                              << "fd_ctx->events=" << fd_ctx->events;
+    SYLAR_ASSERT(!(fd_ctx->events & event));
   }
-  int op = fd_ctx->m_events ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
+  int op = fd_ctx->events ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
   epoll_event epevent;
-  epevent.events = EPOLLET | fd_ctx->m_events | event;
+  epevent.events = EPOLLET | fd_ctx->events | event;
   epevent.data.ptr = fd_ctx;
 
   int rt = epoll_ctl(m_epfd, op, fd, &epevent);
@@ -136,7 +137,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
   }
 
   ++m_pendingEventCount;
-  fd_ctx->m_events = (Event)(fd_ctx->m_events | event);
+  fd_ctx->events = (Event)(fd_ctx->events | event);
   FdContext::EventContext &event_ctx = fd_ctx->getContext(event);
   SYLAR_ASSERT(!event_ctx.scheduler && !event_ctx.fiber && !event_ctx.cb);
 
@@ -157,13 +158,12 @@ bool IOManager::delEvent(int fd, Event event) {
   }
   FdContext *fd_ctx = m_fdContexts[fd];
   lock.unlock();
-  // 重名了
   FdContext::MutexType::Lock lock2(fd_ctx->mutex);
-  if (!(fd_ctx->m_events & event)) {
+  if (!(fd_ctx->events & event)) {
     return false;
   }
   //??
-  Event new_events = (Event)(fd_ctx->m_events & ~event);
+  Event new_events = (Event)(fd_ctx->events & ~event);
   int op = new_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
   epoll_event epevent;
   epevent.events = EPOLLET | new_events;
@@ -178,7 +178,7 @@ bool IOManager::delEvent(int fd, Event event) {
   }
 
   --m_pendingEventCount;
-  fd_ctx->m_events = new_events;
+  fd_ctx->events = new_events;
   FdContext::EventContext &event_ctx = fd_ctx->getContext(event);
   fd_ctx->resetContext(event_ctx);
   return true;
@@ -193,11 +193,11 @@ bool IOManager::cancelEvent(int fd, Event event) {
   lock.unlock();
 
   FdContext::MutexType::Lock lock2(fd_ctx->mutex);
-  if (!(fd_ctx->m_events & event)) {
+  if (!(fd_ctx->events & event)) {
     return false;
   }
   //??
-  Event new_events = (Event)(fd_ctx->m_events & ~event);
+  Event new_events = (Event)(fd_ctx->events & ~event);
   int op = new_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
   epoll_event epevent;
   epevent.events = EPOLLET | new_events;
@@ -225,7 +225,7 @@ bool IOManager::cancelAll(int fd) {
   lock.unlock();
 
   FdContext::MutexType::Lock lock2(fd_ctx->mutex);
-  if (!(fd_ctx->m_events)) {
+  if (!(fd_ctx->events)) {
     return false;
   }
 
@@ -242,15 +242,15 @@ bool IOManager::cancelAll(int fd) {
     return false;
   }
 
-  if (fd_ctx->m_events & READ) {
+  if (fd_ctx->events & READ) {
     fd_ctx->triggerEvent(READ);
     --m_pendingEventCount;
   }
-  if (fd_ctx->m_events & WRITE) {
+  if (fd_ctx->events & WRITE) {
     fd_ctx->triggerEvent(WRITE);
     --m_pendingEventCount;
   }
-  SYLAR_ASSERT(fd_ctx->m_events == 0);
+  SYLAR_ASSERT(fd_ctx->events == 0);
   return true;
 }
 
@@ -334,12 +334,12 @@ void IOManager::idle() {
         real_events |= WRITE;
       }
 
-      if ((fd_ctx->m_events & real_events) == NONE) {
+      if ((fd_ctx->events & real_events) == NONE) {
         continue;
       }
 
       // 剩余事件
-      int left_events = (fd_ctx->m_events & ~real_events);
+      int left_events = (fd_ctx->events & ~real_events);
       int op = left_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
       event.events = EPOLLET | left_events;
 

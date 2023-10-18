@@ -43,10 +43,6 @@ void test_fiber() {
   } else {
     SYLAR_LOG_INFO(g_logger) << "else" << errno << " " << strerror(errno);
   }
-  //   iom.addEvent(sock, sylar::IOManger::READ, []() { SYLAR_LOG_INFO(g_logger) << "connected"; });
-
-  //   iom.addEvent(sock, sylar::IOManger::WRITE, []() { SYLAR_LOG_INFO(g_logger) << "connected";
-  //   });}
 }
 
 void test_timer() {
