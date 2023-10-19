@@ -263,8 +263,14 @@ void IOManager::tickle() {
   int rt = write(m_tickleFds[1], "T", 1);
   SYLAR_ASSERT(rt == 1);
 }
-
-bool IOManager::stopping() { return m_pendingEventCount == 0 && Scheduler::stopping(); }
+bool IOManager::stopping(uint64_t &timeout) {
+  timeout = getNextTimer();
+  return timeout == ~0ull && m_pendingEventCount == 0 && Scheduler::stopping();
+}
+bool IOManager::stopping() {
+  uint64_t timeout = 0;
+  return stopping(timeout);
+}
 
 // 核心
 void IOManager::idle() {
@@ -277,18 +283,20 @@ void IOManager::idle() {
 
   while (true) {
     uint64_t next_timeout = 0;
-    if (stopping()) {
-      //获得当前的时间
-      next_timeout = getNextTimer();
-      if (next_timeout == ~0ull) {
-        SYLAR_LOG_INFO(g_logger) << "name=" << getName() << "idle stopping exit";
-        break;
-      }
+    if (stopping(next_timeout)) {
+      // //获得当前的时间
+      // next_timeout = getNextTimer();
+      // if (next_timeout == ~0ull) {
+      //   SYLAR_LOG_INFO(g_logger) << "name=" << getName() << "idle stopping exit";
+      //   break;
+      // }
+      SYLAR_LOG_INFO(g_logger) << "name=" << getName() << "idle stopping exit";
+      break;
     }
 
     int rt = 0;
     do {
-      static const int MAX_TIMEOUT = 1000;
+      static const int MAX_TIMEOUT = 3000;
       if (next_timeout != ~0ull) {
         next_timeout = static_cast<int>(next_timeout) > MAX_TIMEOUT ? MAX_TIMEOUT : next_timeout;
       } else {

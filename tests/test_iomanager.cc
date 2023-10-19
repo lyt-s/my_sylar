@@ -1,5 +1,6 @@
 #include "sylar/iomanager.h"
 #include "sylar/log.h"
+#include "timer.h"
 
 #include <arpa/inet.h>
 #include <asm-generic/errno.h>
@@ -45,11 +46,30 @@ void test_fiber() {
   }
 }
 
+sylar::Timer::ptr s_timer;
 void test_timer() {
   sylar::IOManager iom(2);
-  iom.addTimer(
-      500, []() { SYLAR_LOG_INFO(g_logger) << "hello timer"; }, true);
+  s_timer = iom.addTimer(
+      1000,
+      // +& ??why？？
+      // [&timer]() {
+      //   static int i = 0;
+      //   SYLAR_LOG_INFO(g_logger) << "hello timer" << i;
+      //   if (++i == 5) {
+      //     timer->cancel();
+      //   }
+      // }
+      []() {
+        static int i = 0;
+        SYLAR_LOG_INFO(g_logger) << "hello timer" << i;
+        if (++i == 5) {
+          s_timer->reset(2000, true);
+          // s_timer->cancel();
+        }
+      },
+      true);
 }
+
 void test_one() {
   std::cout << "EPOLLIN= " << EPOLLIN;
   std::cout << "EPOLLOUT= " << EPOLLOUT << "\n";
@@ -57,6 +77,13 @@ void test_one() {
   iom.schedule(&test_fiber);
 }
 int main() {
-  test_one();
+  // test_one();
+  test_timer();
   return 0;
 }
+
+// gdb bt??
+// info thread
+// f 2?
+// fin?
+// l

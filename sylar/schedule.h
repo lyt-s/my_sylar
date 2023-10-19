@@ -99,7 +99,8 @@ class Scheduler {
       while (begin != end) {
         // 参数为指针，取得是地址，会将里面的东西 swap掉。---这里怎么确认是callback还是fiber？？
         need_tickle = scheduleNoLock(&*begin, -1) || need_tickle;
-        ++begin;
+        // 没有++begin  --》死循环
+        ++begin;  // 注意迭代器问题
       }
     }
     if (need_tickle) {

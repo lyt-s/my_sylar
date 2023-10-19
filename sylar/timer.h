@@ -16,13 +16,13 @@ class Timer : public std::enable_shared_from_this<Timer> {
  public:
   typedef std::shared_ptr<Timer> ptr;
 
- private:
-  Timer(uint64_t ms, std::function<void()> cb, bool resurring, TimerManager *manager);
-  Timer(uint64_t next);
-
   bool cancel();
   bool refresh();
   bool reset(uint64_t ms, bool from_now);
+
+ private:
+  Timer(uint64_t ms, std::function<void()> cb, bool resurring, TimerManager *manager);
+  Timer(uint64_t next);
 
  private:
   bool m_recurring = false;  // 是否循环定时器

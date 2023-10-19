@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
@@ -95,6 +96,7 @@ class IOManager : public Scheduler, public TimerManager {
   void onTimerInsertAtFront() override;
 
   void contextResize(size_t size);
+  bool stopping(uint64_t &timeout);
 
  private:
   /// epoll 文件句柄
