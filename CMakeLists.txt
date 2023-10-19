@@ -28,11 +28,13 @@ set(LIB_SRC
     sylar/schedule.cc
     sylar/iomanager.cc
     sylar/timer.cc
+    sylar/hook.cc
     )
 
 add_library(sylar SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(sylar) #__FILE__
 target_link_libraries(sylar PUBLIC 
+                            dl # todo
                             pthread
                             ${Boost_LIBRARIES}
                             ${yaml-cpp_LIBRARIES})

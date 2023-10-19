@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include "fiber.h"
+#include "hook.h"
 #include "log.h"
 #include "macro.h"
 #include "thread.h"
@@ -195,6 +196,8 @@ void Scheduler::idle() {
 // 一个是use_caller的线程在run执行,线程池里面自己创建的线程也在run中执行
 void Scheduler::run() {
   // 设置当前的协程调度器
+  SYLAR_LOG_INFO(g_logger) << "run";
+  set_hook_enable(true);
   setThis();
   // 如果当前线程id != 主线程id
   // 这里m_rootThread指的是user_caller的线程，user_caller线程需要特殊处理
