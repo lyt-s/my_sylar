@@ -54,22 +54,26 @@ void IOManager::FdContext::triggerEvent(IOManager::Event event) {
 
 IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
     : Scheduler(threads, use_caller, name) {
+  // 创建epoll实例
   m_epfd = epoll_create(5000);
   SYLAR_ASSERT(m_epfd > 0);
 
-  // pipe ??
+  // 创建pipe，获取m_tickleFds[2]，其中m_tickleFds[0]是管道的读端，m_tickleFds[1]是管道的写端
   int rt = pipe(m_tickleFds);
   // 不等于0异常
   SYLAR_ASSERT(!rt);
 
+  // 注册pipe读句柄的可读事件，用于tickle调度协程，通过epoll_event.data.fd保存描述符
   epoll_event event;
   memset(&event, 0, sizeof(epoll_event));
   event.events = EPOLLIN | EPOLLET;  // 边沿触发
   event.data.fd = m_tickleFds[0];    //设置句柄
 
+  // 非阻塞方式，配合边缘触发
   rt = fcntl(m_tickleFds[0], F_SETFL, O_NONBLOCK);
   SYLAR_ASSERT(!rt);
 
+  // 将管道的读描述符加入epoll多路复用，如果管道可读，idle中的epoll_wait会返回
   rt = epoll_ctl(m_epfd, EPOLL_CTL_ADD, m_tickleFds[0], &event);
   SYLAR_ASSERT(!rt);
 
@@ -105,6 +109,7 @@ void IOManager::contextResize(size_t size) {
 
 int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
   FdContext *fd_ctx = nullptr;
+  // 读锁
   RWMutexType::ReadLock lock(m_mutex);
   if (static_cast<int>(m_fdContexts.size()) > fd) {
     // 优化 直接在if中加读锁
@@ -116,13 +121,15 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     contextResize(fd * 1.5);
     fd_ctx = m_fdContexts[fd];
   }
-
+  // 同一个fd不允许重复添加相同的事件
   FdContext::MutexType::Lock lock2(fd_ctx->mutex);
   if (fd_ctx->events & event) {
     SYLAR_LOG_ERROR(g_logger) << "addEvent assert fd = " << fd << "event= " << event
                               << "fd_ctx->events=" << fd_ctx->events;
     SYLAR_ASSERT(!(fd_ctx->events & event));
   }
+
+  // 将新的事件加入epoll_wait，使用epoll_event的私有指针存储FdContext的位置
   int op = fd_ctx->events ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
   epoll_event epevent;
   epevent.events = EPOLLET | fd_ctx->events | event;
@@ -137,10 +144,13 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
   }
 
   ++m_pendingEventCount;
+
+  // 找到这个fd的event事件对应的EventContext，对其中的scheduler, cb, fiber进行赋值
   fd_ctx->events = (Event)(fd_ctx->events | event);
   FdContext::EventContext &event_ctx = fd_ctx->getContext(event);
   SYLAR_ASSERT(!event_ctx.scheduler && !event_ctx.fiber && !event_ctx.cb);
 
+  // 赋值scheduler和回调函数，如果回调函数为空，则把当前协程当成回调执行体
   event_ctx.scheduler = Scheduler::GetThis();
   if (cb) {
     event_ctx.cb.swap(cb);
@@ -151,6 +161,13 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
   return 0;
 }
 
+/**
+ * @brief 删除事件
+ * @param[in] fd socket句柄
+ * @param[in] event 事件类型
+ * @attention 不会触发事件
+ * @return 是否删除成功
+ */
 bool IOManager::delEvent(int fd, Event event) {
   RWMutexType::ReadLock lock(m_mutex);
   if (static_cast<int>(m_fdContexts.size()) <= fd) {
@@ -162,7 +179,8 @@ bool IOManager::delEvent(int fd, Event event) {
   if (!(fd_ctx->events & event)) {
     return false;
   }
-  //??
+
+  // 清除指定的事件，表示不关心这个事件了，如果清除之后结果为0，则从epoll_wait中删除该文件描述符
   Event new_events = (Event)(fd_ctx->events & ~event);
   int op = new_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
   epoll_event epevent;
@@ -178,12 +196,20 @@ bool IOManager::delEvent(int fd, Event event) {
   }
 
   --m_pendingEventCount;
+  // 重置该fd对应的event事件上下文
   fd_ctx->events = new_events;
   FdContext::EventContext &event_ctx = fd_ctx->getContext(event);
   fd_ctx->resetContext(event_ctx);
   return true;
 }
 
+/**
+ * @brief 取消事件
+ * @param[in] fd socket句柄
+ * @param[in] event 事件类型
+ * @attention 如果该事件被注册过回调，那就触发一次回调事件
+ * @return 是否删除成功
+ */
 bool IOManager::cancelEvent(int fd, Event event) {
   RWMutexType::ReadLock lock(m_mutex);
   if (static_cast<int>(m_fdContexts.size()) <= fd) {
@@ -196,7 +222,7 @@ bool IOManager::cancelEvent(int fd, Event event) {
   if (!(fd_ctx->events & event)) {
     return false;
   }
-  //??
+  // 删除事件 todo
   Event new_events = (Event)(fd_ctx->events & ~event);
   int op = new_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
   epoll_event epevent;
@@ -211,11 +237,18 @@ bool IOManager::cancelEvent(int fd, Event event) {
     return false;
   }
 
+  // 删除之前触发一次事件
   fd_ctx->triggerEvent(event);
   --m_pendingEventCount;
   return true;
 }
 
+/**
+ * @brief 取消所有事件
+ * @details 所有被注册的回调事件在cancel之前都会被执行一次
+ * @param[in] fd socket句柄
+ * @return 是否删除成功
+ */
 bool IOManager::cancelAll(int fd) {
   RWMutexType::ReadLock lock(m_mutex);
   if (static_cast<int>(m_fdContexts.size()) <= fd) {
@@ -229,6 +262,7 @@ bool IOManager::cancelAll(int fd) {
     return false;
   }
 
+  // 删除全部事件
   int op = EPOLL_CTL_DEL;
   epoll_event epevent;
   epevent.events = 0;
@@ -242,6 +276,7 @@ bool IOManager::cancelAll(int fd) {
     return false;
   }
 
+  // 触发全部已注册的事件
   if (fd_ctx->events & READ) {
     fd_ctx->triggerEvent(READ);
     --m_pendingEventCount;
@@ -256,10 +291,17 @@ bool IOManager::cancelAll(int fd) {
 
 IOManager *IOManager::GetThis() { return dynamic_cast<IOManager *>(Scheduler::GetThis()); }
 
+/**
+ * @brief 通知调度器有任务要调度
+ * @details 写pipe让idle协程从epoll_wait退出，待idle协程yield之后Scheduler::run就可以调度其他任务
+ * 如果当前没有空闲调度线程，那就没必要发通知
+ */
 void IOManager::tickle() {
-  if (hasIdleThreads()) {
+  // 如果没有空闲线程，就直接返回
+  if (!hasIdleThreads()) {
     return;
   }
+  // 往管道的写端写
   int rt = write(m_tickleFds[1], "T", 1);
   SYLAR_ASSERT(rt == 1);
 }
@@ -272,9 +314,18 @@ bool IOManager::stopping() {
   return stopping(timeout);
 }
 
-// 核心
+/**
+ * @brief idle协程
+ * @details
+ * 对于IO协程调度来说，应阻塞在等待IO事件上，idle退出的时机是epoll_wait返回，对应的操作是tickle或注册的IO事件就绪
+ * 调度器无调度任务时会阻塞idle协程上，对IO调度器而言，idle状态应该关注两件事，一是有没有新的调度任务，对应Schduler::schedule()，
+ * 如果有新的调度任务，那应该立即退出idle状态，并执行对应的任务；二是关注当前注册的所有IO事件有没有触发，如果有触发，那么应该执行
+ * IO事件对应的回调函数
+ */
 void IOManager::idle() {
-  epoll_event *events = new epoll_event[64]();
+  // 一次epoll_wait最多检测256个就绪事件，如果就绪事件超过了这个数，那么会在下轮epoll_wati继续处理
+  const uint64_t MAX_EVNETS = 256;
+  epoll_event *events = new epoll_event[MAX_EVNETS]();
   std::shared_ptr<epoll_event> shared_events(events, [](epoll_event *ptr) {
     // delete[] events; //error
     // 传进来的是ptr
@@ -318,17 +369,21 @@ void IOManager::idle() {
       cbs.clear();
     }
 
+    // 遍历所有发生的事件，根据epoll_event的私有指针找到对应的FdContext，进行事件处理
     for (int i = 0; i < rt; ++i) {
       epoll_event &event = events[i];
       // SYLAR_LOG_INFO(g_logger) << event.data.fd;
       if (event.data.fd == m_tickleFds[0]) {
+        // ticklefd[0]用于通知协程调度，这时只需要把管道里的内容读完即可，本轮idle结束Scheduler::run会重新执行协程调度
         u_int8_t dummy;
+
+        // 一个一个的读
         while (read(m_tickleFds[0], &dummy, 1) == 1)
           ;
 
         continue;
       }
-
+      // 通过epoll_event的私有指针获取FdContext
       FdContext *fd_ctx = static_cast<FdContext *>(event.data.ptr);
       FdContext::MutexType::Lock lock(fd_ctx->mutex);
       if (event.events & (EPOLLERR | EPOLLHUP)) {
@@ -374,6 +429,7 @@ void IOManager::idle() {
     auto raw_ptr = cur.get();
     cur.reset();
 
+    // 切换到调度协程，执行任务
     raw_ptr->swapOut();
   }
 }

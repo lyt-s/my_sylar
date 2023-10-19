@@ -34,12 +34,13 @@ class IOManager : public Scheduler, public TimerManager {
 
  private:
   /**
-   * @brief Socket事件上线文类
+   * @brief Socket事件上下文类
+   * @details 每个socket fd都对应一个FdContext，包括fd的值，fd上的事件，以及fd的读写事件上下文
    */
   struct FdContext {
     typedef Mutex MutexType;
     /**
-     * @brief 事件上线文类
+     * @brief 事件上下文类
      */
     struct EventContext {
       /// 事件执行的调度器
@@ -104,7 +105,6 @@ class IOManager : public Scheduler, public TimerManager {
   /// pipe 文件句柄，fd[0]读端，fd[1]写端
   int m_tickleFds[2];
   /// 当前等待执行的IO事件数量
-
   std::atomic<size_t> m_pendingEventCount = {0};
   /// IOManager的Mutex
   RWMutexType m_mutex;
