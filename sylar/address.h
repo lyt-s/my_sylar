@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <memory>
 #include <ostream>
-#include "endian.h"
+#include "endian.hpp"
 namespace sylar {
 
 class IPAddress;

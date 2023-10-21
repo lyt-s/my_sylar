@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+
 #include "noncopyable.h"
 
 namespace sylar {

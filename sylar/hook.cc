@@ -1,5 +1,10 @@
 #include "hook.h"
 #include <dlfcn.h>
+#include <fcntl.h>
+#include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <cstdarg>
 
 #include "config.h"
 #include "fd_manager.h"
@@ -280,7 +285,7 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
   }
   int error = 0;
   socklen_t len = sizeof(int);
-  if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len)) {
+  if (-1 == getsockopt_f(fd, SOL_SOCKET, SO_ERROR, &error, &len)) {
     return -1;
   }
   if (!error) {

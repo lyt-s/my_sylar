@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -12,8 +13,9 @@
 #include <ostream>
 #include <sstream>
 #include <stdexcept>
+#include "log.h"
 
-#include "endian.h"
+#include "endian.hpp"
 namespace sylar {
 static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
@@ -143,8 +145,8 @@ std::ostream &IPv6Address::insert(std::ostream &os) const {
     if (i) {
       os << ":";
     }
-    // ipv6 格式
-    os << (int)byteswapOnLittleEndian(addr[i]);
+    // ipv6 格式 todo
+    os << std::hex << (int)byteswapOnLittleEndian(addr[i]) << std::dec;
   }
   if (used_zeros && addr[7] == 0) {
     os << "::";
@@ -179,13 +181,13 @@ IPAddress::ptr IPv6Address::subnetMask(uint32_t prefix_len) {
   subnet.sin6_family = AF_INET6;
   subnet.sin6_addr.s6_addr[prefix_len / 8] = ~CreateMask<uint8_t>(prefix_len % 8);
 
-  for (int i = 0; i < prefix_len / 8; ++i) {
-    subnet.sin6_addr[i] = 0xFF;
+  for (uint32_t i = 0; i < prefix_len / 8; ++i) {
+    subnet.sin6_addr.s6_addr[i] = 0xFF;
   }
   return IPv6Address::ptr(new IPv6Address(subnet));
 }
 
-uint32_t IPv6Address::getPort() const { return byteswapOnLittleEndian(m_addr.sin6_port); }
+uint32_t IPv6Address::getPort() const { return (int)byteswapOnLittleEndian(m_addr.sin6_port); }
 void IPv6Address::setPort(uint32_t v) { m_addr.sin6_port = byteswapOnLittleEndian(v); }
 
 // Unix
@@ -205,7 +207,7 @@ UnixAddress::UnixAddress(const std::string &path) {
   if (!path.empty() && path[0] == '\0') {
     --m_length;
   }
-  if (m_length > sizeof(m_sun.sun_path)) {
+  if (m_length > sizeof(m_addr.sun_path)) {
     throw std::logic_error("path too long");
   }
   memcpy(m_addr.sun_path, path.c_str(), m_length);
@@ -215,11 +217,11 @@ UnixAddress::UnixAddress(const std::string &path) {
 const sockaddr *UnixAddress::getAddr() const { return (sockaddr *)&m_addr; }
 socklen_t UnixAddress::getAddrLen() const { return m_length; }
 std::ostream &UnixAddress::insert(std::ostream &os) const {
-  if (m_length > offsetof(sockaddr_un, sun_path) && m_sun.sun_path[0] == '\0') {
+  if (m_length > offsetof(sockaddr_un, sun_path) && m_addr.sun_path[0] == '\0') {
     return os << "\\0"
               << std::string(m_addr.sun_path + 1, m_length - offsetof(sockaddr_un, sun_path) - 1);
   }
-  return os << m_un.sun_path;
+  return os << m_addr.sun_path;
 }
 
 // unknown

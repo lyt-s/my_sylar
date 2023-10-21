@@ -10,7 +10,6 @@
 #include <type_traits>
 
 namespace sylar {
-
 template <class T>
 typename std::enable_if<sizeof(T) == sizeof(uint64_t), T>::type byteswap(T value) {
   return (T)bswap_64((uint64_t)value);
