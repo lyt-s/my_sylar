@@ -2,8 +2,6 @@
 #define SYLAR_HOOK_H_
 
 #include <fcntl.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
 namespace sylar {

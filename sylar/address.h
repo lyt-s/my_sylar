@@ -3,10 +3,16 @@
 
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/un.h>
+
 #include <cstdint>
 #include <memory>
 #include <ostream>
+#include "endian.h"
 namespace sylar {
+
+class IPAddress;
+
 class Address {
  public:
   typedef std::shared_ptr<Address> ptr;
@@ -18,7 +24,7 @@ class Address {
   virtual socklen_t getAddrLen() const = 0;
 
   virtual std::ostream &insert(std::ostream &os) const = 0;
-  std::string toString();
+  std::string toString() const;
 
   // stl 用来做排序比较 todo
   bool operator<(const Address &rhs) const;
@@ -43,6 +49,7 @@ class IPAddress : public Address {
 class IPv4Address : public IPAddress {
  public:
   using ptr = std::shared_ptr<IPv4Address>;
+  IPv4Address(const sockaddr_in address);
   IPv4Address(uint32_t address = INADDR_ANY, uint32_t port = 0);
 
   const sockaddr *getAddr() const override;
@@ -62,7 +69,9 @@ class IPv4Address : public IPAddress {
 class IPv6Address : public IPAddress {
  public:
   using ptr = std::shared_ptr<IPv6Address>;
-  IPv6Address(uint32_t address = INADDR_ANY, uint32_t port = 0);
+  IPv6Address();
+  IPv6Address(const char *address, uint32_t port = 0);
+  IPv6Address(const sockaddr_in6 address);
 
   const sockaddr *getAddr() const override;
   socklen_t getAddrLen() const override;
@@ -80,6 +89,7 @@ class IPv6Address : public IPAddress {
 
 class UnixAddress : public Address {
  public:
+  UnixAddress();
   using ptr = std::shared_ptr<UnixAddress>;
   UnixAddress(const std::string &path);
 
@@ -96,7 +106,7 @@ class UnknownAddress : public Address {
  public:
   using ptr = std::shared_ptr<UnknownAddress>;
 
-  UnknownAddress();
+  UnknownAddress(int family);
   const sockaddr *getAddr() const override;
   socklen_t getAddrLen() const override;
   std::ostream &insert(std::ostream &os) const override;

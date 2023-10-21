@@ -19,18 +19,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Set C++ standard.
 # set(CMAKE_CXX_STANDARD 11)
 #-------------------------------------------------------------------------------
-set(LIB_SRC
-    sylar/config.cc
-    sylar/fiber.cc
-    sylar/log.cc
-    sylar/util.cc
-    sylar/thread.cc
-    sylar/schedule.cc
-    sylar/iomanager.cc
-    sylar/timer.cc
-    sylar/hook.cc
-    sylar/fd_manager.cc
-    )
+file(GLOB_RECURSE LIB_SRC sylar/*.cc)
 
 add_library(sylar SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(sylar) #__FILE__
