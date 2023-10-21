@@ -293,7 +293,7 @@ class ConfigVar : public ConfigVarBase {
   }
   std::string getTypeName() const override { return typeid(T).name(); }
 
-  u_int64_t addListener(u_int64_t key, on_change_cb cb) {
+  u_int64_t addListener(on_change_cb cb) {
     static u_int64_t s_fun_id = 0;
     RWMutexType::WriteLock lock(m_mutex);
     ++s_fun_id;

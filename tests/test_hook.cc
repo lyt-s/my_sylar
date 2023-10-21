@@ -1,4 +1,9 @@
+#include <arpa/inet.h>
+#include <sys/epoll.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
+#include <cerrno>
 #include "sylar/hook.h"
 #include "sylar/iomanager.h"
 #include "sylar/log.h"
@@ -20,8 +25,45 @@ void test_sleep() {
   SYLAR_LOG_INFO(g_logger) << "test_slepp";
 }
 
-int main() {
-  test_sleep();
+void test_socket() {
+  int sock = socket(AF_INET, SOCK_STREAM, 0);
 
+  sockaddr_in addr;
+  memset(&addr, 0, sizeof(addr));
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(80);
+  inet_pton(AF_INET, "39.156.66.14", &addr.sin_addr.s_addr);
+
+  SYLAR_LOG_INFO(g_logger) << "begin connect";
+  int rt = connect(sock, (const sockaddr *)&addr, sizeof(addr));
+  SYLAR_LOG_INFO(g_logger) << "connect rt =" << rt << " errno=" << errno;
+  if (rt) {
+    return;
+  }
+
+  const char data[] = "Get / HTTP/1.0\r\n\r\n";
+  rt = send(sock, data, sizeof(data), 0);
+  SYLAR_LOG_INFO(g_logger) << "send rt =" << rt << " errno=" << errno;
+
+  if (rt <= 0) {
+    return;
+  }
+
+  std::string buff;
+  buff.resize(4096);
+
+  rt = recv(sock, &buff[0], buff.size(), 0);
+  SYLAR_LOG_INFO(g_logger) << "recv rt=" << rt << "errno" << errno;
+  if (rt <= 0) {
+    return;
+  }
+  buff.resize(rt);
+  SYLAR_LOG_INFO(g_logger) << buff;
+}
+int main() {
+  // test_sleep();
+  // test_socket();
+  sylar::IOManager iom;
+  iom.schedule(test_socket);
   return 0;
 }

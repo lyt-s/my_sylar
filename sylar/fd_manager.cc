@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <cstdint>
 #include "hook.h"
 
 namespace sylar {
@@ -48,11 +49,50 @@ bool FdCtx::init() {
   return m_isInit;
 }
 
-void setTimeout(int type, uint64_t v);
-uint64_t getTimeout();
+void FdCtx::setTimeout(int type, uint64_t v) {
+  if (type == SO_RCVTIMEO) {
+    m_recvTimeout = v;
+  } else {
+    m_sendTimeout = v;
+  }
+}
 
-FdManager();
+uint64_t FdCtx::getTimeout(int type) {
+  if (type == SO_RCVTIMEO) {
+    return m_recvTimeout;
+  } else {
+    return m_sendTimeout;
+  }
+}
 
-FdCtx::ptr get(int fd, bool auto_create = false);
-void del(int fd);
+FdManager::FdManager() { m_datas.resize(64); }
+
+FdCtx::ptr FdManager::get(int fd, bool auto_create) {
+  RWMutexType::ReadLock lock(m_mutex);
+  // 越界
+  if (static_cast<int>(m_datas.size()) <= fd) {
+    if (auto_create == false) {
+      return nullptr;
+    }
+
+  } else {
+    // 没有越界，--有值，或者 不需要创建
+    if (m_datas[fd] || !auto_create) {
+      return m_datas[fd];
+    }
+  }
+
+  lock.unlock();
+  RWMutexType::WriteLock lock2(m_mutex);
+  FdCtx::ptr ctx(new FdCtx(fd));
+  m_datas[fd] = ctx;
+  return ctx;
+}
+void FdManager::del(int fd) {
+  RWMutexType::WriteLock lock(m_mutex);
+  if (static_cast<int>(m_datas.size()) <= fd) {
+    return;
+  }
+  m_datas[fd].reset();
+}
 }  // namespace sylar

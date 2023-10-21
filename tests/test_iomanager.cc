@@ -77,8 +77,8 @@ void test_one() {
   iom.schedule(&test_fiber);
 }
 int main() {
-  // test_one();
-  test_timer();
+  test_one();
+  // test_timer();
   return 0;
 }
 

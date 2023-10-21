@@ -29,6 +29,7 @@ set(LIB_SRC
     sylar/iomanager.cc
     sylar/timer.cc
     sylar/hook.cc
+    sylar/fd_manager.cc
     )
 
 add_library(sylar SHARED ${LIB_SRC})

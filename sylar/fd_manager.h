@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include "iomanager.h"
+#include "singleton.h"
 #include "thread.h"
 
 namespace sylar {
@@ -27,7 +28,7 @@ class FdCtx : public std::enable_shared_from_this<FdCtx> {
   bool getSysNonblock() const { return m_sysNonblock; }
 
   void setTimeout(int type, uint64_t v);
-  uint64_t getTimeout();
+  uint64_t getTimeout(int type);
 
  private:
   bool m_isInit : 1;
@@ -53,5 +54,8 @@ class FdManager {
   RWMutexType m_mutex;
   std::vector<FdCtx::ptr> m_datas;
 };
+
+// 单例
+typedef Singleton<FdManager> FdMgr;
 }  // namespace sylar
 #endif  // FD_MANAGER_H_

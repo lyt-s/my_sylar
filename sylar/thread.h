@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include "noncopyable.h"
 
 namespace sylar {
 
@@ -17,7 +18,7 @@ namespace sylar {
 // 主要用在线程构造函数，在确保出线程构造函数之前，要启动的线程已经启动了关于子线程的执行时机。
 // sylar的线程类可以保证在构造完成之后线程函数一定已经处于运行状态，
 // 这是通过一个信号量来实现的，构造函数在创建线程后会一直阻塞，直到线程函数运行并且通知信号量，构造函数才会返回，而构造函数一旦返回，就说明线程函数已经在执行了。
-class Semaphore {
+class Semaphore : public Noncopyable {
  public:
   Semaphore(uint32_t count = 0);
   ~Semaphore();
@@ -118,7 +119,7 @@ struct WriteScopeLockImpl {
   bool m_locked;
 };
 
-class Mutex {
+class Mutex : public Noncopyable {
  public:
   typedef ScopeLockImpl<Mutex> Lock;
   Mutex() { pthread_mutex_init(&m_mutex, nullptr); }
@@ -132,7 +133,7 @@ class Mutex {
   pthread_mutex_t m_mutex;
 };
 // 互斥量
-class RWMutex {
+class RWMutex : public Noncopyable {
  public:
   typedef ReadScopeLockImpl<RWMutex> ReadLock;
   typedef WriteScopeLockImpl<RWMutex> WriteLock;
@@ -150,7 +151,7 @@ class RWMutex {
   pthread_rwlock_t m_lock;
 };
 
-class Spinlock {
+class Spinlock : public Noncopyable {
  public:
   typedef ScopeLockImpl<Spinlock> Lock;
   Spinlock() { pthread_spin_init(&m_mutex, 0); }
@@ -166,7 +167,7 @@ class Spinlock {
 };
 
 // todo
-class CASLock {
+class CASLock : public Noncopyable {
  public:
   typedef ScopeLockImpl<CASLock> Lock;
   CASLock() { m_mutex.clear(); }
