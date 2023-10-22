@@ -161,7 +161,11 @@ retry:
   return n;
 }
 
+#ifdef __cplusplus
+
 extern "C" {
+
+#endif
 #define XX(name) name##_fun name##_f = nullptr;
 HOOK_FUN(XX);
 #undef XX
@@ -486,4 +490,7 @@ int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t
   }
   return setsockopt_f(sockfd, level, optname, optval, optlen);
 }
+
+#ifdef __cplusplus
 }
+#endif

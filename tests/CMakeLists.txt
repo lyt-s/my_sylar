@@ -76,3 +76,12 @@ target_include_directories(test_hook PRIVATE  ${CMAKE_SOURCE_DIR}
 
 
 target_link_libraries(test_hook PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+#----test-----------------------------------------------------------------------
+add_executable(test_address test_address.cc)
+
+target_include_directories(test_address PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+
+target_link_libraries(test_address PRIVATE  dl pthread sylar ${Boost_LIBRARIES})

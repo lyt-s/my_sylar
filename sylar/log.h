@@ -534,7 +534,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
   LogLevel::Level m_level;
   /// Mutex
   MutexType m_mutex;
-  /// 日志目标集合
+  /// 日志目标集合 map
   std::list<LogAppender::ptr> m_appenders;
   /// 日志格式器
   LogFormatter::ptr m_formatter;

@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <unistd.h>
+#include <cstdint>
 namespace sylar {
 bool is_hook_enable();
 void set_hook_enable(bool flag);
@@ -11,7 +12,10 @@ void set_hook_enable(bool flag);
 }  // namespace sylar
 
 // 告诉编译器，我是c风格 todo
+#ifdef __cplusplus
+
 extern "C" {
+#endif
 
 // sleep
 typedef unsigned int (*sleep_fun)(unsigned int seconds);
@@ -83,6 +87,12 @@ extern getsockopt_fun getsockopt_f;
 typedef int (*setsockopt_fun)(int sockfd, int level, int optname, const void *optval,
                               socklen_t optlen);
 extern setsockopt_fun setsockopt_f;
+
+extern int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
+                                uint64_t timeout_ms);
+#ifdef __cplusplus
 }
+
+#endif
 
 #endif  // SYLAR_HOOK_H_
