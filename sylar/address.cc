@@ -107,8 +107,8 @@ Address::ptr Address::LookupAny(const std::string &host, int family, int type, i
   return nullptr;
 }
 
-Address::ptr Address::LookupAnyIPAddress(const std::string &host, int family, int type,
-                                         int protocol) {
+std::shared_ptr<IPAddress> Address::LookupAnyIPAddress(const std::string &host, int family,
+                                                       int type, int protocol) {
   std::vector<Address::ptr> result;
   if (Lookup(result, host, family, type, protocol)) {
     for (auto &i : result) {
@@ -122,7 +122,7 @@ Address::ptr Address::LookupAnyIPAddress(const std::string &host, int family, in
 }
 
 // man getifaddrs
-bool Address::GetInterfaceAddress(
+bool Address::GetInterfaceAddresses(
     std::multimap<std::string, std::pair<Address::ptr, uint32_t>> &result, int family) {
   struct ifaddrs *next, *results;
   if (getifaddrs(&results) != 0) {
@@ -166,11 +166,12 @@ bool Address::GetInterfaceAddress(
     return false;
   }
   freeifaddrs(results);
-  return true;
+  return !result.empty();
+  ;
 }
 
-bool Address::GetInterfaceAddress(std::vector<std::pair<Address::ptr, uint32_t>> &result,
-                                  const std::string &iface, int family) {
+bool Address::GetInterfaceAddresses(std::vector<std::pair<Address::ptr, uint32_t>> &result,
+                                    const std::string &iface, int family) {
   if (iface.empty() || iface == "*") {
     if (family == AF_INET || family == AF_UNSPEC) {
       result.push_back(std::make_pair(Address::ptr(new IPv4Address()), 0u));
@@ -183,7 +184,7 @@ bool Address::GetInterfaceAddress(std::vector<std::pair<Address::ptr, uint32_t>>
 
   std::multimap<std::string, std::pair<Address::ptr, uint32_t>> results;
 
-  if (!GetInterfaceAddress(results, family)) {
+  if (!GetInterfaceAddresses(results, family)) {
     return false;
   }
   // todo
@@ -191,8 +192,19 @@ bool Address::GetInterfaceAddress(std::vector<std::pair<Address::ptr, uint32_t>>
   for (; its.first != its.second; ++its.first) {
     result.push_back(its.first->second);
   }
-  return true;
+  return !result.empty();
 }
+
+int Address::getFamily() const {
+  // todo family
+  return getAddr()->sa_family;
+}
+std::string Address::toString() const {
+  std::stringstream ss;
+  insert(ss);
+  return ss.str();
+}
+
 Address::ptr Address::Create(const sockaddr *address, socklen_t addrlen) {
   if (address == nullptr) {
     return nullptr;
@@ -205,21 +217,12 @@ Address::ptr Address::Create(const sockaddr *address, socklen_t addrlen) {
       break;
     case AF_INET6:
       result.reset(new IPv6Address(*(const sockaddr_in6 *)address));
+      break;
     default:
       result.reset(new UnknownAddress(*address));
       break;
   }
   return result;
-}
-
-int Address::getFamily() const {
-  // todo family
-  return getAddr()->sa_family;
-}
-std::string Address::toString() const {
-  std::stringstream ss;
-  insert(ss);
-  return ss.str();
 }
 
 // stl 用来做排序比较 todo
@@ -254,9 +257,9 @@ IPAddress::ptr IPAddress::Create(const char *address, uint16_t port) {
 
   int error = getaddrinfo(address, NULL, &hints, &results);
   if (error) {
-    SYLAR_LOG_ERROR(g_logger) << "IPAddress::Create(" << address << ", " << port
-                              << ") error=" << error << " error=" << errno
-                              << "errstr=" << strerror(errno);
+    SYLAR_LOG_DEBUG(g_logger) << "IPAddress::Create(" << address << ", " << port
+                              << ") error=" << error << " errno=" << errno
+                              << " errstr=" << strerror(errno);
     return nullptr;
   }
 
@@ -290,7 +293,7 @@ IPv4Address::ptr IPv4Address::Create(const char *address, uint16_t port) {
   return rt;
 }
 
-IPv4Address::IPv4Address(const sockaddr_in address) { m_addr = address; }
+IPv4Address::IPv4Address(const sockaddr_in &address) { m_addr = address; }
 IPv4Address::IPv4Address(uint32_t address, uint16_t port) {
   // todo
   memset(&m_addr, 0, sizeof(m_addr));
@@ -343,7 +346,7 @@ IPAddress::ptr IPv4Address::subnetMask(uint32_t prefix_len) {
 }
 
 uint32_t IPv4Address::getPort() const { return byteswapOnLittleEndian(m_addr.sin_port); }
-void IPv4Address::setPort(uint32_t v) { m_addr.sin_port = byteswapOnLittleEndian(v); }
+void IPv4Address::setPort(uint16_t v) { m_addr.sin_port = byteswapOnLittleEndian(v); }
 
 // IPv6
 IPv6Address::ptr IPv6Address::Create(const char *address, uint16_t port) {
@@ -364,14 +367,15 @@ IPv6Address::IPv6Address() {
   m_addr.sin6_family = AF_INET6;
 }
 
-IPv6Address::IPv6Address(const sockaddr_in6 address) { m_addr = address; }
+IPv6Address::IPv6Address(const sockaddr_in6 &address) { m_addr = address; }
 
 IPv6Address::IPv6Address(const uint8_t address[16], uint16_t port) {
   // todo
   memset(&m_addr, 0, sizeof(m_addr));
   m_addr.sin6_family = AF_INET6;
   m_addr.sin6_port = byteswapOnLittleEndian(port);  //转成网络字节序
-  memcpy(&m_addr.sin6_addr, address, 16);
+  // add s6_addr
+  memcpy(&m_addr.sin6_addr.s6_addr, address, 16);
 }
 
 const sockaddr *IPv6Address::getAddr() const { return (sockaddr *)&m_addr; }
@@ -434,11 +438,10 @@ IPAddress::ptr IPv6Address::subnetMask(uint32_t prefix_len) {
   return IPv6Address::ptr(new IPv6Address(subnet));
 }
 
-uint32_t IPv6Address::getPort() const { return (int)byteswapOnLittleEndian(m_addr.sin6_port); }
-void IPv6Address::setPort(uint32_t v) { m_addr.sin6_port = byteswapOnLittleEndian(v); }
+uint32_t IPv6Address::getPort() const { return byteswapOnLittleEndian(m_addr.sin6_port); }
 
-// Unix
-// -1??
+void IPv6Address::setPort(uint16_t v) { m_addr.sin6_port = byteswapOnLittleEndian(v); }
+
 static const size_t MAX_PATH_LEN = sizeof(((sockaddr_un *)0)->sun_path) - 1;
 
 UnixAddress::UnixAddress() {
@@ -471,7 +474,7 @@ std::ostream &UnixAddress::insert(std::ostream &os) const {
   }
   return os << m_addr.sun_path;
 }
-void UnixAddress::setAddrlen(uint32_t v) { m_length = v; }
+void UnixAddress::setAddrLen(uint32_t v) { m_length = v; }
 // unknown
 UnknownAddress::UnknownAddress(int family) {
   memset(&m_addr, 0, sizeof(m_addr));
@@ -480,11 +483,17 @@ UnknownAddress::UnknownAddress(int family) {
 
 UnknownAddress::UnknownAddress(const sockaddr &addr) { m_addr = addr; }
 
-const sockaddr *UnknownAddress::getAddr() const { return &m_addr; }
 sockaddr *UnknownAddress::getAddr() { return (sockaddr *)&m_addr; }
+
+const sockaddr *UnknownAddress::getAddr() const { return &m_addr; }
+
 socklen_t UnknownAddress::getAddrLen() const { return sizeof(m_addr); }
+
 std::ostream &UnknownAddress::insert(std::ostream &os) const {
-  os << "[unknownAddress faily=]" << m_addr.sa_family << "]";
+  os << "[UnknownAddress family=" << m_addr.sa_family << "]";
   return os;
 }
+
+std::ostream &operator<<(std::ostream &os, const Address &addr) { return addr.insert(os); }
+
 }  // namespace sylar

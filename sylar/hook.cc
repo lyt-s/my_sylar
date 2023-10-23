@@ -90,6 +90,7 @@ static ssize_t do_io(int fd, OriginFun fun, const char *hook_fun_name, uint32_t 
     return fun(fd, std::forward<Args>(args)...);
   }
 
+  SYLAR_LOG_DEBUG(g_logger) << "do_io" << hook_fun_name << ">";
   sylar::FdCtx::ptr ctx = sylar::FdMgr::GetInstance()->get(fd);
   if (!ctx) {
     // todo
@@ -114,6 +115,7 @@ retry:
     n = fun(fd, std::forward<Args>(args)...);
   }
   if (n == -1 && errno == EAGAIN) {
+    SYLAR_LOG_DEBUG(g_logger) << "do_io" << hook_fun_name << ">";
     sylar::IOManager *iom = sylar::IOManager::GetThis();
     sylar::Timer::ptr timer;
     std::weak_ptr<timer_info> winfo(tinfo);
@@ -204,11 +206,13 @@ int nanosleep(const struct timespec *req, struct timespec *rem) {
     return nanosleep_f(req, rem);
   }
 
-  int timout_ms = req->tv_sec * 1000 + req->tv_nsec / 1000 / 1000;
+  int timeout_ms = req->tv_sec * 1000 + req->tv_nsec / 1000 / 1000;
   sylar::Fiber::ptr fiber = sylar::Fiber::GetThis();
   sylar::IOManager *iom = sylar::IOManager::GetThis();
 
-  iom->addTimer(timout_ms, [iom, fiber]() { iom->schedule(fiber); });
+  iom->addTimer(timeout_ms, std::bind((void(sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
+                                          sylar::IOManager::schedule,
+                                      iom, fiber, -1));
 
   sylar::Fiber::YieldToHold();
   return 0;
@@ -248,7 +252,7 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
   size_t n = connect_f(fd, addr, addrlen);
   if (n == 0) {
     return 0;
-  } else if (n != (uint64_t)-1) {
+  } else if (errno != EINPROGRESS) {
     return n;
   }
 
@@ -393,7 +397,7 @@ int fcntl(int fd, int cmd, ...) {
         arg &= ~O_NONBLOCK;
       }
       return fcntl_f(fd, cmd, arg);
-    }
+    } break;
     case F_GETFL: {
       va_end(va);
       int arg = fcntl_f(fd, cmd);
@@ -406,7 +410,7 @@ int fcntl(int fd, int cmd, ...) {
       } else {
         return arg &= ~O_NONBLOCK;
       }
-    }
+    } break;
     case F_DUPFD:
     case F_DUPFD_CLOEXEC:
     case F_SETFD:

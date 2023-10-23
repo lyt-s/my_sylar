@@ -41,7 +41,7 @@ void test_socket() {
     return;
   }
 
-  const char data[] = "Get / HTTP/1.0\r\n\r\n";
+  const char data[] = "GET / HTTP/1.0\r\n\r\n";
   rt = send(sock, data, sizeof(data), 0);
   SYLAR_LOG_INFO(g_logger) << "send rt =" << rt << " errno=" << errno;
 

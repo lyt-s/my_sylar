@@ -29,8 +29,9 @@ IOManager::FdContext::EventContext &IOManager::FdContext::getContext(IOManager::
     case IOManager::WRITE:
       return write;
     default:
-      SYLAR_ASSERT2(false, "getcontext");
+      SYLAR_ASSERT2(false, "getContext");
   }
+  throw std::invalid_argument("getContext invalid event");
 }
 void IOManager::FdContext::resetContext(IOManager::FdContext::EventContext &ctx) {
   ctx.scheduler = nullptr;
@@ -38,16 +39,20 @@ void IOManager::FdContext::resetContext(IOManager::FdContext::EventContext &ctx)
   ctx.cb = nullptr;
 }
 void IOManager::FdContext::triggerEvent(IOManager::Event event) {
+  // SYLAR_LOG_INFO(g_logger) << "fd=" << fd
+  //     << " triggerEvent event=" << event
+  //     << " events=" << events;
   SYLAR_ASSERT(events & event);
+  // if(SYLAR_UNLIKELY(!(event & event))) {
+  //     return;
+  // }
   events = (Event)(events & ~event);
   EventContext &ctx = getContext(event);
-
   if (ctx.cb) {
     ctx.scheduler->schedule(&ctx.cb);
   } else {
     ctx.scheduler->schedule(&ctx.fiber);
   }
-
   ctx.scheduler = nullptr;
   return;
 }
@@ -156,7 +161,8 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     event_ctx.cb.swap(cb);
   } else {
     event_ctx.fiber = Fiber::GetThis();
-    SYLAR_ASSERT(event_ctx.fiber->getState() == Fiber::EXEC);
+    SYLAR_ASSERT2(event_ctx.fiber->getState() == Fiber::EXEC,
+                  "state=" << event_ctx.fiber->getState());
   }
   return 0;
 }
@@ -353,7 +359,7 @@ void IOManager::idle() {
       } else {
         next_timeout = MAX_TIMEOUT;
       }
-      rt = epoll_wait(m_epfd, events, 64, static_cast<int>(next_timeout));
+      rt = epoll_wait(m_epfd, events, MAX_EVNETS, static_cast<int>(next_timeout));
 
       if (rt < 0 && errno == EINTR) {
       } else {
@@ -365,6 +371,7 @@ void IOManager::idle() {
     listExpiredCb(cbs);
 
     if (!cbs.empty()) {
+      // SYLAR_LOG_DEBUG(g_logger) << "on timer cbs.size=" << cbs.size();
       schedule(cbs.begin(), cbs.end());
       cbs.clear();
     }
@@ -375,10 +382,11 @@ void IOManager::idle() {
       // SYLAR_LOG_INFO(g_logger) << event.data.fd;
       if (event.data.fd == m_tickleFds[0]) {
         // ticklefd[0]用于通知协程调度，这时只需要把管道里的内容读完即可，本轮idle结束Scheduler::run会重新执行协程调度
-        u_int8_t dummy;
+        u_int8_t dummy[256];
 
         // 一个一个的读
-        while (read(m_tickleFds[0], &dummy, 1) == 1)
+        while (read(m_tickleFds[0], &dummy, sizeof(dummy)) > 0)
+
           ;
 
         continue;
@@ -387,7 +395,8 @@ void IOManager::idle() {
       FdContext *fd_ctx = static_cast<FdContext *>(event.data.ptr);
       FdContext::MutexType::Lock lock(fd_ctx->mutex);
       if (event.events & (EPOLLERR | EPOLLHUP)) {
-        event.events |= EPOLLIN | EPOLLOUT;
+        event.events |= (EPOLLIN | EPOLLOUT) & fd_ctx->events;
+        ;
       }
       int real_events = NONE;
       if (event.events & EPOLLIN) {
@@ -434,5 +443,5 @@ void IOManager::idle() {
   }
 }
 
-void IOManager::onTimerInsertAtFront() { tickle(); }
+void IOManager::onTimerInsertedAtFront() { tickle(); }
 }  // namespace sylar
