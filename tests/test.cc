@@ -1,14 +1,19 @@
 #include <iostream>
+#include <memory>
 #include "sylar/log.h"
 #include "sylar/util.h"
 
 int main(int argc, char **argv) {
-  sylar::Logger::ptr logger(new sylar::Logger);
-  logger->addAppender(sylar::LogAppender::ptr(new sylar::StdoutLogAppender));
+  // sylar::Logger::ptr logger (new sylar::Logger);
+  sylar::Logger::ptr logger = std::make_shared<sylar::Logger>();
+  // logger->addAppender(sylar::LogAppender::ptr(new sylar::StdoutLogAppender));
+  logger->addAppender(
+      std::dynamic_pointer_cast<sylar::LogAppender>(std::make_shared<sylar::StdoutLogAppender>()));
 
-  sylar::FileLogAppender::ptr file_appender(new sylar::FileLogAppender("./log.txt"));
-  sylar::LogFormatter::ptr fmt(new sylar::LogFormatter("%d%T%p%T%m%n"));
-  file_appender->setFormatter(fmt);
+  // sylar::FileLogAppender::ptr file_appender(new sylar::FileLogAppender("./log.txt"));
+  sylar::FileLogAppender::ptr file_appender = std::make_shared<sylar::FileLogAppender>("./log.txt");
+
+  sylar::LogFormatter::ptr fmt = std::make_shared<sylar::LogFormatter>("%d%T%p%T%m%n");
   file_appender->setLevel(sylar::LogLevel::ERROR);
 
   logger->addAppender(file_appender);

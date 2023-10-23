@@ -5,6 +5,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <cstdarg>
+#include <memory>
 
 #include "config.h"
 #include "fd_manager.h"
@@ -106,7 +107,7 @@ static ssize_t do_io(int fd, OriginFun fun, const char *hook_fun_name, uint32_t 
 
   uint64_t to = ctx->getTimeout(timeout_so);
   // todo  make_shared
-  std::shared_ptr<timer_info> tinfo(new timer_info);
+  std::shared_ptr<timer_info> tinfo = std::make_shared<timer_info>();
 
 retry:
   ssize_t n = fun(fd, std::forward<Args>(args)...);
@@ -166,6 +167,7 @@ retry:
 extern "C" {
 
 #endif
+
 #define XX(name) name##_fun name##_f = nullptr;
 HOOK_FUN(XX);
 #undef XX
