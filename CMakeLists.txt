@@ -24,7 +24,7 @@ file(GLOB_RECURSE LIB_SRC sylar/*.cc)
 add_library(sylar SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(sylar) #__FILE__
 target_link_libraries(sylar PUBLIC 
-                            dl # todo
+                            dl # todo  dslym
                             pthread
                             ${Boost_LIBRARIES}
                             ${yaml-cpp_LIBRARIES})
