@@ -42,7 +42,8 @@ void test_socket() {
   SYLAR_LOG_INFO(g_logger) << buffs;
 }
 int main() {
-  sylar::IOManager iom;
-  iom.schedule(&test_socket);
+  // sylar::IOManager iom;
+  // iom.schedule(&test_socket);
+  test_socket();
   return 0;
 }

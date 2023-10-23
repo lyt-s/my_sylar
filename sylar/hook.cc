@@ -376,7 +376,8 @@ int close(int fd) {
       sylar::FdMgr::GetInstance()->del(fd);
     }
   }
-  return close(fd);
+  // return close(fd);// bug
+  return close_f(fd);
 }
 
 int fcntl(int fd, int cmd, ...) {
