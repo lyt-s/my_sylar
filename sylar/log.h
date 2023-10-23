@@ -21,6 +21,7 @@
                           logger, level, __FILE__, __LINE__, 0, sylar::GetThreadId(), \
                           sylar::GetFiberId(), time(0), sylar::Thread::GetName())))   \
       .getSS()
+
 /**
  * @brief 使用流式方式将日志级别debug的日志写入到logger
  */

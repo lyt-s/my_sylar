@@ -1,0 +1,2 @@
+2023-10-23 15:29:17	11060	UNKNOW	0	[ERROR]	[root]	tests/test.cc:27	test macro error
+2023-10-23 15:29:17	11060	UNKNOW	0	[ERROR]	[root]	tests/test.cc:29	test macro fmt error aa

@@ -5,6 +5,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <cstdarg>
+#include <memory>
 
 #include "config.h"
 #include "fd_manager.h"
@@ -70,6 +71,7 @@ struct _HookIniter {
   }
 };
 
+// 这里确保 在main函数之前，就初始化好
 static _HookIniter s_hook_initer;
 
 bool is_hook_enable() { return t_hook_enable; }
@@ -87,6 +89,8 @@ template <typename OriginFun, typename... Args>
 static ssize_t do_io(int fd, OriginFun fun, const char *hook_fun_name, uint32_t event,
                      int timeout_so, Args &&...args) {
   if (!sylar::t_hook_enable) {
+    //  read(int fd, void *buf, size_t count)
+    //  return do_io(fd, read_f, "read", sylar::IOManager::READ, SO_RCVTIMEO, buf, count);
     return fun(fd, std::forward<Args>(args)...);
   }
 
@@ -107,7 +111,7 @@ static ssize_t do_io(int fd, OriginFun fun, const char *hook_fun_name, uint32_t 
 
   uint64_t to = ctx->getTimeout(timeout_so);
   // todo  make_shared
-  std::shared_ptr<timer_info> tinfo(new timer_info);
+  std::shared_ptr<timer_info> tinfo = std::make_shared<timer_info>();
 
 retry:
   ssize_t n = fun(fd, std::forward<Args>(args)...);
@@ -168,6 +172,7 @@ retry:
 extern "C" {
 
 #endif
+
 #define XX(name) name##_fun name##_f = nullptr;
 HOOK_FUN(XX);
 #undef XX
@@ -179,11 +184,11 @@ unsigned int sleep(unsigned int seconds) {
 
   sylar::Fiber::ptr fiber = sylar::Fiber::GetThis();
   sylar::IOManager *iom = sylar::IOManager::GetThis();
-  // iom->addEvent(seconds * 1000,
-  //               std::bind((void(sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
-  //                             sylar::IOManager::schedule,
-  //                         iom, fiber, -1));
-  iom->addTimer(seconds * 1000, [iom, fiber]() { iom->schedule(fiber); });
+  iom->addTimer(seconds * 1000,
+                std::bind((void (sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
+                              sylar::IOManager::schedule,
+                          iom, fiber, -1));
+
   sylar::Fiber::YieldToHold();
   return 0;
 }
@@ -195,8 +200,10 @@ int usleep(useconds_t usec) {
 
   sylar::Fiber::ptr fiber = sylar::Fiber::GetThis();
   sylar::IOManager *iom = sylar::IOManager::GetThis();
-  //   iom->addTimer(usec / 1000, std::bind(&sylar::IOManager::schedule, iom, fiber));
-  iom->addTimer(usec / 1000, [iom, fiber]() { iom->schedule(fiber); });
+  iom->addTimer(usec / 1000, std::bind((void (sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
+                                           sylar::IOManager::schedule,
+                                       iom, fiber, -1));
+
   sylar::Fiber::YieldToHold();
   return 0;
 }
