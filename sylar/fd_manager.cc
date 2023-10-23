@@ -70,6 +70,9 @@ uint64_t FdCtx::getTimeout(int type) {
 FdManager::FdManager() { m_datas.resize(64); }
 
 FdCtx::ptr FdManager::get(int fd, bool auto_create) {
+  if (fd == -1) {
+    return nullptr;
+  }
   RWMutexType::ReadLock lock(m_mutex);
   // 越界
   if (static_cast<int>(m_datas.size()) <= fd) {
@@ -86,7 +89,12 @@ FdCtx::ptr FdManager::get(int fd, bool auto_create) {
 
   lock.unlock();
   RWMutexType::WriteLock lock2(m_mutex);
+  // bug
   FdCtx::ptr ctx(new FdCtx(fd));
+  // 越界了
+  if (fd >= (int)m_datas.size()) {
+    m_datas.resize(fd * 1.5);
+  }
   m_datas[fd] = ctx;
   return ctx;
 }

@@ -11,7 +11,7 @@ void test_fiber() {
   static int s_count = 5;
   SYLAR_LOG_INFO(g_logger) << "test in fiber s_count =" << s_count;
 
-  sleep(1);
+  // sleep(1);  // bug 在这里  死锁了
   if (--s_count >= 0) {
     // 在指定线程执行
     sylar::Scheduler::GetThis()->schedule(&test_fiber);
@@ -20,11 +20,11 @@ void test_fiber() {
 int main() {
   SYLAR_LOG_INFO(g_logger) << "main";
   // // bug--已解决
-  // sylar::Scheduler sc(1, true, "test");
   sylar::Scheduler sc(1, true, "test");
+  // sylar::Scheduler sc(2, true, "test");
 
   sc.start();
-  sleep(2);
+  // sleep(2);
   SYLAR_LOG_INFO(g_logger) << "schedule";
   // 添加任务
 

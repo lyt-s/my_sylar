@@ -26,8 +26,8 @@ bool Timer::Comparator::operator()(const Timer::ptr &lhs, const Timer::ptr &rhs)
   return lhs.get() < rhs.get();
 }
 
-Timer::Timer(uint64_t ms, std::function<void()> cb, bool resurring, TimerManager *manager)
-    : m_recurring(resurring), m_ms(ms), m_cb(cb), m_manager(manager) {
+Timer::Timer(uint64_t ms, std::function<void()> cb, bool recurring, TimerManager *manager)
+    : m_recurring(recurring), m_ms(ms), m_cb(cb), m_manager(manager) {
   m_next = sylar::GetCurrentMS() + m_ms;
 }
 
@@ -94,7 +94,7 @@ bool Timer::reset(uint64_t ms, bool from_now) {
   return true;
 }
 
-TimerManager::TimerManager() { m_previousTime = sylar::GetCurrentMS(); }
+TimerManager::TimerManager() { m_previouseTime = sylar::GetCurrentMS(); }
 TimerManager::~TimerManager() {}
 
 Timer::ptr TimerManager::addTimer(uint64_t ms, std::function<void()> cb, bool recurring) {
@@ -143,8 +143,10 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>> &cbs) {
     }
   }
   RWMutexType::WriteLock lock(m_mutex);
-
-  bool rollover = detextClockRollover(now_ms);
+  if (m_timers.empty()) {
+    return;
+  }
+  bool rollover = detectClockRollover(now_ms);
   if (!rollover && ((*m_timers.begin())->m_next > now_ms)) {
     return;
   }
@@ -185,12 +187,12 @@ void TimerManager::addTimer(Timer::ptr timer, RWMutexType::WriteLock &lock) {
 }
 
 // 传进来的时间比他小，并且比他一个小时之前按还小，有问题
-bool TimerManager::detextClockRollover(uint64_t now_ms) {
+bool TimerManager::detectClockRollover(uint64_t now_ms) {
   bool rollover = false;
-  if (now_ms < m_previousTime && now_ms < (m_previousTime - 60 * 60 * 1000)) {
+  if (now_ms < m_previouseTime && now_ms < (m_previouseTime - 60 * 60 * 1000)) {
     rollover = true;
   }
-  m_previousTime = now_ms;
+  m_previouseTime = now_ms;
   return rollover;
 }
 

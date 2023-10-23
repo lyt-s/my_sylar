@@ -120,7 +120,7 @@ struct WriteScopeLockImpl {
   bool m_locked;
 };
 
-class Mutex : public Noncopyable {
+class Mutex {
  public:
   typedef ScopeLockImpl<Mutex> Lock;
   Mutex() { pthread_mutex_init(&m_mutex, nullptr); }
@@ -134,7 +134,7 @@ class Mutex : public Noncopyable {
   pthread_mutex_t m_mutex;
 };
 // 互斥量
-class RWMutex : public Noncopyable {
+class RWMutex {
  public:
   typedef ReadScopeLockImpl<RWMutex> ReadLock;
   typedef WriteScopeLockImpl<RWMutex> WriteLock;

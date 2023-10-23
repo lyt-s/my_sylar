@@ -21,7 +21,7 @@ class Timer : public std::enable_shared_from_this<Timer> {
   bool reset(uint64_t ms, bool from_now);
 
  private:
-  Timer(uint64_t ms, std::function<void()> cb, bool resurring, TimerManager *manager);
+  Timer(uint64_t ms, std::function<void()> cb, bool recurring, TimerManager *manager);
   Timer(uint64_t next);
 
  private:
@@ -58,14 +58,14 @@ class TimerManager {
   void addTimer(Timer::ptr val, RWMutexType::WriteLock &lock);
 
  private:
-  bool detextClockRollover(uint64_t now_ms);
+  bool detectClockRollover(uint64_t now_ms);
 
  private:
   RWMutexType m_mutex;
   // 这个参数不代表映射对象，而是传递一个比较结构体 //todo
   std::set<Timer::ptr, Timer::Comparator> m_timers;
   bool m_tickled = false;
-  uint64_t m_previousTime = 0;
+  uint64_t m_previouseTime = 0;
 };
 
 }  // namespace sylar
