@@ -11,10 +11,9 @@
 #include <string>
 #include <utility>
 #include <vector>
-extern "C++" {
 
 #include "endian.h"
-}
+
 namespace sylar {
 
 class IPAddress;
