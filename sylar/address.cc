@@ -475,6 +475,7 @@ std::ostream &UnixAddress::insert(std::ostream &os) const {
   return os << m_addr.sun_path;
 }
 void UnixAddress::setAddrLen(uint32_t v) { m_length = v; }
+
 // unknown
 UnknownAddress::UnknownAddress(int family) {
   memset(&m_addr, 0, sizeof(m_addr));
