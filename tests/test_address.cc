@@ -1,3 +1,4 @@
+#include <sys/socket.h>
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -13,7 +14,7 @@ void test() {
   std::vector<sylar::Address::ptr> addrs;
 
   SYLAR_LOG_INFO(g_logger) << "begin";
-  bool v = sylar::Address::Lookup(addrs, "www.baidu.com");
+  bool v = sylar::Address::Lookup(addrs, "www.baidu.com", AF_INET);
   SYLAR_LOG_INFO(g_logger) << "end";
   if (!v) {
     SYLAR_LOG_ERROR(g_logger) << "lookup fail";
@@ -46,8 +47,8 @@ void test_ipv4() {
   }
 }
 int main() {
-  // test();
+  test();
   // test_iface();
-  test_ipv4();
+  // test_ipv4();
   return 0;
 }

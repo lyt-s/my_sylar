@@ -40,7 +40,6 @@ T byteswapOnLittleEndian(T t) {
 
 template <class T>
 T byteswapOnBigEndian(T t) {
-  // todo
   return byteswap(t);
 }
 
@@ -57,6 +56,7 @@ T byteswapOnBigEndian(T t) {
 }
 
 #endif
+
 }  // namespace sylar
 
 }  // extern

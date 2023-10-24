@@ -12,10 +12,9 @@
 #include <string>
 #include <utility>
 #include <vector>
-extern "C++" {
 
 #include "endian.h"
-}
+
 namespace sylar {
 
 class IPAddress;
@@ -79,7 +78,7 @@ class IPv4Address : public IPAddress {
 
   static IPv4Address::ptr Create(const char *address, uint16_t port = 0);
 
-  IPv4Address(const sockaddr_in address);
+  IPv4Address(const sockaddr_in &address);
   IPv4Address(uint32_t address = INADDR_ANY, uint16_t port = 0);
 
   const sockaddr *getAddr() const override;

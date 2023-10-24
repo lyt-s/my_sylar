@@ -40,6 +40,28 @@ static uint32_t CountBytes(T value) {
   return result;
 }
 
+Address::ptr Address::LookupAny(const std::string &host, int family, int type, int protocol) {
+  std::vector<Address::ptr> result;
+  if (Lookup(result, host, family, type, protocol)) {
+    return result[0];
+  }
+  return nullptr;
+}
+
+Address::ptr Address::LookupAnyIPAddress(const std::string &host, int family, int type,
+                                         int protocol) {
+  std::vector<Address::ptr> result;
+  if (Lookup(result, host, family, type, protocol)) {
+    for (auto &i : result) {
+      IPAddress::ptr v = std::dynamic_pointer_cast<IPAddress>(i);
+      if (v) {
+        return v;
+      }
+    }
+  }
+  return nullptr;
+}
+
 // man getaddrinfo
 bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host, int family,
                      int type, int protocol) {
@@ -71,7 +93,8 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
   if (node.empty()) {
     service = (const char *)memchr(host.c_str(), ':', host.size());
     if (service) {
-      if (memchr(service + 1, ']', host.c_str() + host.size() - service - 1)) {
+      // 没加！
+      if (!memchr(service + 1, ']', host.c_str() + host.size() - service - 1)) {
         node = host.substr(0, service - host.c_str());
         ++service;
       }
@@ -96,31 +119,8 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
     next = next->ai_next;
   }
   freeaddrinfo(results);
-  return true;
+  return !result.empty();
 }
-
-Address::ptr Address::LookupAny(const std::string &host, int family, int type, int protocol) {
-  std::vector<Address::ptr> result;
-  if (Lookup(result, host, family, type, protocol)) {
-    return result[0];
-  }
-  return nullptr;
-}
-
-Address::ptr Address::LookupAnyIPAddress(const std::string &host, int family, int type,
-                                         int protocol) {
-  std::vector<Address::ptr> result;
-  if (Lookup(result, host, family, type, protocol)) {
-    for (auto &i : result) {
-      IPAddress::ptr v = std::dynamic_pointer_cast<IPAddress>(i);
-      if (v) {
-        return v;
-      }
-    }
-  }
-  return nullptr;
-}
-
 // man getifaddrs
 bool Address::GetInterfaceAddress(
     std::multimap<std::string, std::pair<Address::ptr, uint32_t>> &result, int family) {
@@ -209,6 +209,7 @@ Address::ptr Address::Create(const sockaddr *address, socklen_t addrlen) {
       result.reset(new UnknownAddress(*address));
       break;
   }
+  // SYLAR_LOG_ERROR(g_logger) << "result: " << result->toString();
   return result;
 }
 
@@ -290,7 +291,10 @@ IPv4Address::ptr IPv4Address::Create(const char *address, uint16_t port) {
   return rt;
 }
 
-IPv4Address::IPv4Address(const sockaddr_in address) { m_addr = address; }
+IPv4Address::IPv4Address(const sockaddr_in &address) {
+  //
+  m_addr = address;
+}
 IPv4Address::IPv4Address(uint32_t address, uint16_t port) {
   // todo
   memset(&m_addr, 0, sizeof(m_addr));
