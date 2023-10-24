@@ -49,7 +49,8 @@ class Socket : public std::enable_shared_from_this<Socket>, Noncopyable {
     return getOption(level, option, &result, &length);
   }
 
-  bool setOption(int level, int option, const void *result, size_t len);
+  bool setOption(int level, int option, const void *result, socklen_t len);
+
   template <class T>
   bool setOption(int level, int option, const T &value) {
     return setOption(level, option, &value, sizeof(T));

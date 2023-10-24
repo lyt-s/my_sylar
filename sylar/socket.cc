@@ -98,7 +98,7 @@ bool Socket::getOption(int level, int option, void *result, socklen_t *len) {
   return true;
 }
 
-bool Socket::setOption(int level, int option, const void *result, size_t len) {
+bool Socket::setOption(int level, int option, const void *result, socklen_t len) {
   if (setsockopt(m_sock, level, option, result, (socklen_t)len)) {
     SYLAR_LOG_DEBUG(g_logger) << "setOption sock=" << m_sock << "level=" << level
                               << "option=" << option << "errno=" << errno << "errstr"
@@ -164,7 +164,10 @@ bool Socket::connect(const Address::ptr addr, uint64_t timeout_ms) {
       return false;
     }
   }
-  if (SYLAR_UNLICKLY(addr->getFamily()) != m_family) {
+  SYLAR_LOG_DEBUG(g_logger) << "debug addr->getFamily= " << addr->getFamily();
+  SYLAR_LOG_DEBUG(g_logger) << "debug m_family= " << m_family;
+  // 括号写错位置了
+  if (SYLAR_UNLICKLY(addr->getFamily() != m_family)) {
     SYLAR_LOG_ERROR(g_logger) << "connect sock.family(" << m_family << ") addr.family("
                               << addr->getFamily() << ") not equal, addr=" << addr->toString();
     return false;
@@ -398,7 +401,7 @@ bool Socket::cancelAll() { return IOManager::GetThis()->cancelAll(m_sock); }
 
 void Socket::initSock() {
   int val = 1;
-  setOption(SOL_SOCKET, SO_REUSEADDR, val);
+  setOption<socklen_t>(SOL_SOCKET, SO_REUSEADDR, val);
   if (m_type == SOCK_STREAM) {
     // tcp_NOdelay todo---
     setOption(IPPROTO_TCP, TCP_NODELAY, val);
