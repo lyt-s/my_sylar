@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 #include "fiber.h"
@@ -208,7 +209,8 @@ void Scheduler::run() {
     t_scheduler_fiber = Fiber::GetThis().get();
   }
 
-  Fiber::ptr idle_fiber(new Fiber(std::bind(&Scheduler::idle, this)));
+  // Fiber::ptr idle_fiber(new Fiber(std::bind(&Scheduler::idle, this)));
+  Fiber::ptr idle_fiber = std::make_shared<Fiber>(std::bind(&Scheduler::idle, this));
   Fiber::ptr cb_fiber;
 
   // 协程和线程
@@ -249,7 +251,7 @@ void Scheduler::run() {
       // tickle_me |= it != m_fibers.end(); todo
     }
 
-    //取出了一个需要执行任务，唤醒其他线程
+    // 取出了一个需要执行任务，唤醒其他线程
     if (tickle_me) {
       tickle();  //
     }

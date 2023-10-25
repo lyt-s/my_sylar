@@ -141,7 +141,7 @@ class Address {
 class IPAddress : public Address {
  public:
   typedef std::shared_ptr<IPAddress> ptr;
-
+  IPAddress() = default;
   /**
    * @brief 通过域名,IP,服务器名创建IPAddress
    * @param[in] address 域名,IP,服务器名等.举例: www.sylar.top

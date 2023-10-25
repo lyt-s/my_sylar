@@ -393,7 +393,6 @@ void IOManager::idle() {
         // ticklefd[0]用于通知协程调度，这时只需要把管道里的内容读完即可，本轮idle结束Scheduler::run会重新执行协程调度
         u_int8_t dummy[256];
 
-      
         while (read(m_tickleFds[0], &dummy, sizeof(dummy)) > 0)
 
           ;
@@ -410,7 +409,6 @@ void IOManager::idle() {
        */
       if (event.events & (EPOLLERR | EPOLLHUP)) {
         event.events |= (EPOLLIN | EPOLLOUT) & fd_ctx->events;
-      
       }
       int real_events = NONE;
       if (event.events & EPOLLIN) {
