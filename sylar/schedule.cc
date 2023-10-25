@@ -195,6 +195,7 @@ void Scheduler::idle() {
 // 这个run 一个线程只会有一个协程来执行
 // 一个是use_caller的线程在run执行,线程池里面自己创建的线程也在run中执行
 void Scheduler::run() {
+  // set_hook_enable(true);
   // 设置当前的协程调度器
   SYLAR_LOG_INFO(g_logger) << "run";
   set_hook_enable(true);

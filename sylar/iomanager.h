@@ -14,6 +14,7 @@
 #include "schedule.h"
 #include "thread.h"
 #include "timer.h"
+
 namespace sylar {
 class IOManager : public Scheduler, public TimerManager {
  public:
@@ -100,7 +101,7 @@ class IOManager : public Scheduler, public TimerManager {
   // 协程调度是否应该终止
   bool stopping() override;
   void idle() override;
-  void onTimerInsertAtFront() override;
+  void onTimerInsertedAtFront() override;
 
   void contextResize(size_t size);
   bool stopping(uint64_t &timeout);

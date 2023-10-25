@@ -75,7 +75,8 @@ extern sendmsg_fun sendmsg_f;
 typedef int (*close_fun)(int fd);
 extern close_fun close_f;
 
-typedef int (*fcntl_fun)(int fd, int cmd, ...);
+//
+typedef int (*fcntl_fun)(int fd, int cmd, ... /* arg */);
 extern fcntl_fun fcntl_f;
 
 typedef int (*ioctl_fun)(int fd, unsigned long request, ...);

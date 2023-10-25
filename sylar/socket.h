@@ -16,6 +16,23 @@ class Socket : public std::enable_shared_from_this<Socket>, Noncopyable {
   using ptr = std::shared_ptr<Socket>;
   using weak_ptr = std::weak_ptr<Socket>;
 
+  enum Type { TCP = SOCK_STREAM, UDP = SOCK_DGRAM };
+
+  enum Family {
+    IPv4 = AF_INET,
+    IPv6 = AF_INET6,
+    UNIX = AF_UNIX,
+
+  };
+  static Socket::ptr CreateTCP(sylar::Address::ptr address);
+  static Socket::ptr CreateUDP(sylar::Address::ptr address);
+  static Socket::ptr CreateTCPSocket();
+  static Socket::ptr CreateUDPSocket();
+  static Socket::ptr CreateTCPSocket_6();
+  static Socket::ptr CreateUDPSocket_6();
+  static Socket::ptr CreateUnixTCPSocket();
+  static Socket::ptr CreateUnixUDPSocket();
+
   Socket(int family, int type, int prorocol = 0);
   ~Socket();
 
@@ -32,7 +49,8 @@ class Socket : public std::enable_shared_from_this<Socket>, Noncopyable {
     return getOption(level, option, &result, &length);
   }
 
-  bool setOption(int level, int option, const void *result, size_t len);
+  bool setOption(int level, int option, const void *result, socklen_t len);
+
   template <class T>
   bool setOption(int level, int option, const T &value) {
     return setOption(level, option, &value, sizeof(T));

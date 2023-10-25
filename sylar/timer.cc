@@ -184,7 +184,7 @@ void TimerManager::addTimer(Timer::ptr timer, RWMutexType::WriteLock &lock) {
   lock.unlock();
   // 不需要来回修改，只修改一次
   if (at_front) {
-    onTimerInsertAtFront();
+    onTimerInsertedAtFront();
   }
 }
 

@@ -54,7 +54,7 @@ class TimerManager {
   bool hasTimer();
 
  protected:
-  virtual void onTimerInsertAtFront() = 0;
+  virtual void onTimerInsertedAtFront() = 0;
   void addTimer(Timer::ptr val, RWMutexType::WriteLock &lock);
 
  private:

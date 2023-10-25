@@ -22,6 +22,39 @@ namespace sylar {
 // 多个文件都有log 都要定义成static
 static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
+Socket::ptr Socket::CreateTCP(sylar::Address::ptr address) {
+  Socket::ptr sock(new Socket(address->getFamily(), TCP, 0));
+  return sock;
+}
+Socket::ptr Socket::CreateUDP(sylar::Address::ptr address) {
+  Socket::ptr sock(new Socket(IPv4, TCP, 0));
+  return sock;
+}
+Socket::ptr Socket::CreateTCPSocket() {
+  Socket::ptr sock(new Socket(IPv4, TCP, 0));
+  return sock;
+}
+Socket::ptr Socket::CreateUDPSocket() {
+  Socket::ptr sock(new Socket(IPv4, UDP, 0));
+  return sock;
+}
+Socket::ptr Socket::CreateTCPSocket_6() {
+  Socket::ptr sock(new Socket(IPv6, TCP, 0));
+  return sock;
+}
+Socket::ptr Socket::CreateUDPSocket_6() {
+  Socket::ptr sock(new Socket(IPv6, UDP, 0));
+  return sock;
+}
+Socket::ptr Socket::CreateUnixTCPSocket() {
+  Socket::ptr sock(new Socket(UNIX, TCP, 0));
+  return sock;
+}
+Socket::ptr Socket::CreateUnixUDPSocket() {
+  Socket::ptr sock(new Socket(UNIX, UDP, 0));
+  return sock;
+}
+
 Socket::Socket(int family, int type, int prorocol)
     : m_sock(-1), m_family(family), m_type(type), m_protocol(prorocol), m_isConnected(false) {}
 Socket::~Socket() { close(); }
@@ -65,7 +98,7 @@ bool Socket::getOption(int level, int option, void *result, socklen_t *len) {
   return true;
 }
 
-bool Socket::setOption(int level, int option, const void *result, size_t len) {
+bool Socket::setOption(int level, int option, const void *result, socklen_t len) {
   if (setsockopt(m_sock, level, option, result, (socklen_t)len)) {
     SYLAR_LOG_DEBUG(g_logger) << "setOption sock=" << m_sock << "level=" << level
                               << "option=" << option << "errno=" << errno << "errstr"
@@ -131,7 +164,10 @@ bool Socket::connect(const Address::ptr addr, uint64_t timeout_ms) {
       return false;
     }
   }
-  if (SYLAR_UNLICKLY(addr->getFamily()) != m_family) {
+  SYLAR_LOG_DEBUG(g_logger) << "debug addr->getFamily= " << addr->getFamily();
+  SYLAR_LOG_DEBUG(g_logger) << "debug m_family= " << m_family;
+  // 括号写错位置了
+  if (SYLAR_UNLICKLY(addr->getFamily() != m_family)) {
     SYLAR_LOG_ERROR(g_logger) << "connect sock.family(" << m_family << ") addr.family("
                               << addr->getFamily() << ") not equal, addr=" << addr->toString();
     return false;
@@ -287,7 +323,7 @@ Address::ptr Socket::getRemoteAddress() {
   if (m_family == AF_UNIX) {
     UnixAddress::ptr addr = std::dynamic_pointer_cast<UnixAddress>(result);
     // todo No member named 'setAddrlen' in 'sylar::UnixAddress'
-    addr->setAddrlen(addrlen);
+    addr->setAddrLen(addrlen);
   }
   m_remoteAddress = result;
   return m_remoteAddress;
@@ -323,7 +359,7 @@ Address::ptr Socket::getLocalAddress() {
   if (m_family == AF_UNIX) {
     UnixAddress::ptr addr = std::dynamic_pointer_cast<UnixAddress>(result);
     // todo No member named 'setAddrlen' in 'sylar::UnixAddress'
-    addr->setAddrlen(addrlen);
+    addr->setAddrLen(addrlen);
   }
   m_localAddress = result;
   return m_localAddress;
@@ -365,7 +401,7 @@ bool Socket::cancelAll() { return IOManager::GetThis()->cancelAll(m_sock); }
 
 void Socket::initSock() {
   int val = 1;
-  setOption(SOL_SOCKET, SO_REUSEADDR, val);
+  setOption<socklen_t>(SOL_SOCKET, SO_REUSEADDR, val);
   if (m_type == SOCK_STREAM) {
     // tcp_NOdelay todo---
     setOption(IPPROTO_TCP, TCP_NODELAY, val);
