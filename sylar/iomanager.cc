@@ -52,6 +52,12 @@ void IOManager::FdContext::triggerEvent(IOManager::Event event) {
   return;
 }
 
+/**
+ * @brief 构造函数
+ * @param[in] threads 线程数量
+ * @param[in] use_caller 是否将调用线程包含进去
+ * @param[in] name 调度器的名称
+ */
 IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
     : Scheduler(threads, use_caller, name) {
   // 创建epoll实例
@@ -67,7 +73,7 @@ IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
   epoll_event event;
   memset(&event, 0, sizeof(epoll_event));
   event.events = EPOLLIN | EPOLLET;  // 边沿触发
-  event.data.fd = m_tickleFds[0];    //设置句柄
+  event.data.fd = m_tickleFds[0];    // 设置句柄
 
   // 非阻塞方式，配合边缘触发
   rt = fcntl(m_tickleFds[0], F_SETFL, O_NONBLOCK);
@@ -77,7 +83,6 @@ IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
   rt = epoll_ctl(m_epfd, EPOLL_CTL_ADD, m_tickleFds[0], &event);
   SYLAR_ASSERT(!rt);
 
-  // m_fdContexts.resize(64); bug
   contextResize(64);
 
   // 这里直接开启了Schedluer，也就是说IOManager创建即可调度协程
@@ -85,7 +90,7 @@ IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
 }
 
 IOManager::~IOManager() {
-  stop();
+  Scheduler::stop();
   close(m_epfd);
   close(m_tickleFds[0]);
   close(m_tickleFds[1]);
@@ -107,6 +112,14 @@ void IOManager::contextResize(size_t size) {
   }
 }
 
+/**
+ * @brief 添加事件
+ * @details fd描述符发生了event事件时执行cb函数
+ * @param[in] fd socket句柄
+ * @param[in] event 事件类型
+ * @param[in] cb 事件回调函数，如果为空，则默认把当前协程作为回调执行体
+ * @return 添加成功返回0,失败返回-1
+ */
 int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
   FdContext *fd_ctx = nullptr;
   // 读锁
@@ -143,6 +156,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     return -1;
   }
 
+  // 待执行IO事件数加1
   ++m_pendingEventCount;
 
   // 找到这个fd的event事件对应的EventContext，对其中的scheduler, cb, fiber进行赋值
@@ -156,7 +170,8 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
     event_ctx.cb.swap(cb);
   } else {
     event_ctx.fiber = Fiber::GetThis();
-    SYLAR_ASSERT(event_ctx.fiber->getState() == Fiber::EXEC);
+    SYLAR_ASSERT2(event_ctx.fiber->getState() == Fiber::EXEC,
+                  "state=" << event_ctx.fiber->getState());
   }
   return 0;
 }
@@ -173,6 +188,7 @@ bool IOManager::delEvent(int fd, Event event) {
   if (static_cast<int>(m_fdContexts.size()) <= fd) {
     return false;
   }
+  // 直接使用fd的值作为FdContext数组的下标
   FdContext *fd_ctx = m_fdContexts[fd];
   lock.unlock();
   FdContext::MutexType::Lock lock2(fd_ctx->mutex);
@@ -335,12 +351,6 @@ void IOManager::idle() {
   while (true) {
     uint64_t next_timeout = 0;
     if (stopping(next_timeout)) {
-      // //获得当前的时间
-      // next_timeout = getNextTimer();
-      // if (next_timeout == ~0ull) {
-      //   SYLAR_LOG_INFO(g_logger) << "name=" << getName() << "idle stopping exit";
-      //   break;
-      // }
       SYLAR_LOG_INFO(g_logger) << "name=" << getName() << "idle stopping exit";
       break;
     }
@@ -353,6 +363,7 @@ void IOManager::idle() {
       } else {
         next_timeout = MAX_TIMEOUT;
       }
+      // 阻塞在epoll_wait上，等待事件发生
       rt = epoll_wait(m_epfd, events, 64, static_cast<int>(next_timeout));
 
       if (rt < 0 && errno == EINTR) {
@@ -377,7 +388,6 @@ void IOManager::idle() {
         // ticklefd[0]用于通知协程调度，这时只需要把管道里的内容读完即可，本轮idle结束Scheduler::run会重新执行协程调度
         u_int8_t dummy;
 
-        // 一个一个的读
         while (read(m_tickleFds[0], &dummy, 1) == 1)
           ;
 
@@ -386,8 +396,13 @@ void IOManager::idle() {
       // 通过epoll_event的私有指针获取FdContext
       FdContext *fd_ctx = static_cast<FdContext *>(event.data.ptr);
       FdContext::MutexType::Lock lock(fd_ctx->mutex);
+      /**
+       * EPOLLERR: 出错，比如写读端已经关闭的pipe
+       * EPOLLHUP: 套接字对端关闭
+       * 出现这两种事件，应该同时触发fd的读和写事件，否则有可能出现注册的事件永远执行不到的情况
+       */
       if (event.events & (EPOLLERR | EPOLLHUP)) {
-        event.events |= EPOLLIN | EPOLLOUT;
+        event.events |= (EPOLLIN | EPOLLOUT) & fd_ctx->events;
       }
       int real_events = NONE;
       if (event.events & EPOLLIN) {
@@ -401,7 +416,8 @@ void IOManager::idle() {
         continue;
       }
 
-      // 剩余事件
+      // 剔除已经发生的事件，将剩下的事件重新加入epoll_wait，
+      // 如果剩下的事件为0，表示这个fd已经不需要关注了，直接从epoll中删除
       int left_events = (fd_ctx->events & ~real_events);
       int op = left_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
       event.events = EPOLLET | left_events;
@@ -411,8 +427,10 @@ void IOManager::idle() {
         SYLAR_LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << "," << op << ", " << fd_ctx->fd
                                   << "," << event.events << "):" << rt2 << "(" << errno << ") ("
                                   << strerror(errno) << ")";
+        continue;
       }
 
+      // 处理已经发生的事件，也就是让调度器调度指定的函数或协程
       if (real_events & READ) {
         // 有trigger 数量减一
         fd_ctx->triggerEvent(READ);
@@ -425,6 +443,10 @@ void IOManager::idle() {
       }
     }
 
+    /**
+     * 一旦处理完所有的事件，idle协程swapOut，这样可以让调度协程(Scheduler::run)重新检查是否有新任务要调度
+     * 上面triggerEvent实际也只是把对应的fiber重新加入调度，要执行的话还要等idle协程退出.
+     */
     Fiber::ptr cur = Fiber::GetThis();
     auto raw_ptr = cur.get();
     cur.reset();
