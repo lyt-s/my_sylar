@@ -97,7 +97,7 @@ LogFormatter::ptr LogAppender::getFormatter() {
   return m_formatter;
 }
 
-class MessageFormatItem : public LogFormatter::FormatItem {
+class MessageFormatItem final : public LogFormatter::FormatItem {
  public:
   MessageFormatItem(const std::string &str = "") {}
   void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
@@ -106,7 +106,7 @@ class MessageFormatItem : public LogFormatter::FormatItem {
   }
 };
 
-class LevelFormatItem : public LogFormatter::FormatItem {
+class LevelFormatItem final : public LogFormatter::FormatItem {
  public:
   LevelFormatItem(const std::string &str = "") {}
   void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
@@ -115,7 +115,7 @@ class LevelFormatItem : public LogFormatter::FormatItem {
   }
 };
 
-class ElapseFormatItem : public LogFormatter::FormatItem {
+class ElapseFormatItem final : public LogFormatter::FormatItem {
  public:
   ElapseFormatItem(const std::string &str = "") {}
   void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
@@ -124,7 +124,7 @@ class ElapseFormatItem : public LogFormatter::FormatItem {
   }
 };
 //
-class NameFormatItem : public LogFormatter::FormatItem {
+class NameFormatItem final : public LogFormatter::FormatItem {
  public:
   NameFormatItem(const std::string &str = "") {}
   void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
@@ -133,7 +133,7 @@ class NameFormatItem : public LogFormatter::FormatItem {
   }
 };
 
-class ThreadIdFormatItem : public LogFormatter::FormatItem {
+class ThreadIdFormatItem final : public LogFormatter::FormatItem {
  public:
   ThreadIdFormatItem(const std::string &str = "") {}
   void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
@@ -142,7 +142,7 @@ class ThreadIdFormatItem : public LogFormatter::FormatItem {
   }
 };
 
-class FiberIdFormatItem : public LogFormatter::FormatItem {
+class FiberIdFormatItem final : public LogFormatter::FormatItem {
  public:
   FiberIdFormatItem(const std::string &str = "") {}
   void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
@@ -151,7 +151,7 @@ class FiberIdFormatItem : public LogFormatter::FormatItem {
   }
 };
 
-class ThreadNameFormatItem : public LogFormatter::FormatItem {
+class ThreadNameFormatItem final : public LogFormatter::FormatItem {
  public:
   ThreadNameFormatItem(const std::string &str = "") {}
   void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
@@ -160,7 +160,7 @@ class ThreadNameFormatItem : public LogFormatter::FormatItem {
   }
 };
 
-class DateTimeFormatItem : public LogFormatter::FormatItem {
+class DateTimeFormatItem final : public LogFormatter::FormatItem {
  public:
   DateTimeFormatItem(const std::string &format = "%Y-%m-%d %H:%M:%S") : m_format(format) {
     if (m_format.empty()) {
@@ -182,7 +182,7 @@ class DateTimeFormatItem : public LogFormatter::FormatItem {
   std::string m_format;
 };
 
-class FilenameFormatItem : public LogFormatter::FormatItem {
+class FilenameFormatItem final : public LogFormatter::FormatItem {
  public:
   FilenameFormatItem(const std::string &str = "") {}
   void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
@@ -191,7 +191,7 @@ class FilenameFormatItem : public LogFormatter::FormatItem {
   }
 };
 
-class LineFormatItem : public LogFormatter::FormatItem {
+class LineFormatItem final : public LogFormatter::FormatItem {
  public:
   LineFormatItem(const std::string &str = "") {}
   void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
@@ -200,7 +200,7 @@ class LineFormatItem : public LogFormatter::FormatItem {
   }
 };
 
-class NewLineFormatItem : public LogFormatter::FormatItem {
+class NewLineFormatItem final : public LogFormatter::FormatItem {
  public:
   NewLineFormatItem(const std::string &str = "") {}
   void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
@@ -209,7 +209,7 @@ class NewLineFormatItem : public LogFormatter::FormatItem {
   }
 };
 
-class StringFormatItem : public LogFormatter::FormatItem {
+class StringFormatItem final : public LogFormatter::FormatItem {
  public:
   StringFormatItem(const std::string &str) : m_string(str) {}
   void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
@@ -221,7 +221,7 @@ class StringFormatItem : public LogFormatter::FormatItem {
   std::string m_string;
 };
 
-class TabFormatItem : public LogFormatter::FormatItem {
+class TabFormatItem final : public LogFormatter::FormatItem {
  public:
   TabFormatItem(const std::string &str = "") {}
   void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
@@ -463,7 +463,7 @@ void LogFormatter::init() {
         if (m_pattern[n] == '{') {
           str = m_pattern.substr(i + 1, n - i - 1);
           // std::cout << "*" << str << std::endl;
-          fmt_status = 1;  //解析格式
+          fmt_status = 1;  // 解析格式
           fmt_begin = n;
           ++n;
           continue;
@@ -507,7 +507,7 @@ void LogFormatter::init() {
       s_format_items = {
 #define XX(str, C)                                                           \
   {                                                                          \
-#str, [](const std::string &fmt) { return FormatItem::ptr(new C(fmt)); } \
+    #str, [](const std::string &fmt) { return FormatItem::ptr(new C(fmt)); } \
   }
 
           XX(m, MessageFormatItem),     // m:消息
@@ -710,11 +710,11 @@ struct LogIniter {
             auto it = old_value.find(i);
             sylar::Logger::ptr logger;
             if (it == old_value.end()) {
-              //新增logger
+              // 新增logger
               logger = SYLAR_LOG_NAME(i.name);
             } else {
               if (!(i == *it)) {
-                //修改的logger
+                // 修改的logger
                 logger = SYLAR_LOG_NAME(i.name);
               }
             }

@@ -16,7 +16,7 @@
 #include "timer.h"
 
 namespace sylar {
-class IOManager : public Scheduler, public TimerManager {
+class IOManager final : public Scheduler, public TimerManager {
  public:
   typedef std::shared_ptr<IOManager> ptr;
   typedef RWMutex RWMutexType;
