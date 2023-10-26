@@ -84,7 +84,7 @@ FdCtx::ptr FdManager::get(int fd, bool auto_create) {
       return m_datas[fd];
     }
   }
-
+  // 需要创建的情况
   lock.unlock();
   RWMutexType::WriteLock lock2(m_mutex);
   // FdCtx::ptr ctx(new FdCtx(fd));

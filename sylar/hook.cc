@@ -94,17 +94,20 @@ static ssize_t do_io(int fd, OriginFun fun, const char *hook_fun_name, uint32_t 
     return fun(fd, std::forward<Args>(args)...);
   }
 
-  SYLAR_LOG_DEBUG(g_logger) << "do_io" << hook_fun_name << ">";
+  SYLAR_LOG_DEBUG(g_logger) << "do_io <" << hook_fun_name << ">";
+  // 得到fd 对应的 FdCtx
   sylar::FdCtx::ptr ctx = sylar::FdMgr::GetInstance()->get(fd);
   if (!ctx) {
-    // todo
     return fun(fd, std::forward<Args>(args)...);
   }
   if (ctx->isClosed()) {
+    // Bad file descriptor
     errno = EBADF;
     return -1;
   }
 
+  // 判断传入的fd是否为套接字，如果不为套接字，则调用系统的connect函数并返回。
+  // 判断fd是否被显式设置为了非阻塞模式，如果是则调用系统的connect函数并返回。
   if (!ctx->isSocket() || ctx->getUserNonblock()) {
     return fun(fd, std::forward<Args>(args)...);
   }
@@ -115,6 +118,7 @@ static ssize_t do_io(int fd, OriginFun fun, const char *hook_fun_name, uint32_t 
 
 retry:
   ssize_t n = fun(fd, std::forward<Args>(args)...);
+  // EINTR ---Interrupted system call
   while (n == -1 && errno == EINTR) {
     n = fun(fd, std::forward<Args>(args)...);
   }
@@ -124,6 +128,7 @@ retry:
     sylar::Timer::ptr timer;
     std::weak_ptr<timer_info> winfo(tinfo);
 
+    // (uint64_t)-1 = 18446744073709551615 (0xffffffffffffffff)
     if (to != (uint64_t)-1) {
       timer = iom->addConditionTimer(
           to,
@@ -181,8 +186,9 @@ unsigned int sleep(unsigned int seconds) {
   if (!sylar::t_hook_enable) {
     return sleep_f(seconds);
   }
-
+  // 返回当前线程正在执行的协程
   sylar::Fiber::ptr fiber = sylar::Fiber::GetThis();
+  // 用于获取当前线程的调度器的调度协程
   sylar::IOManager *iom = sylar::IOManager::GetThis();
   iom->addTimer(seconds * 1000,
                 std::bind((void(sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
@@ -234,6 +240,7 @@ int socket(int domain, int type, int protocol) {
   if (fd == -1) {
     return fd;
   }
+  // true 表示,FdMgr没有时会自动创建
   sylar::FdMgr::GetInstance()->get(fd, true);
   return fd;
 }
@@ -252,10 +259,12 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
   if (!ctx->isSocket()) {
     return connect_f(fd, addr, addrlen);
   }
+  // 判断fd是否被显式设置为了非阻塞模式，如果是则调用系统的connect函数并返回。
   if (ctx->getUserNonblock()) {
     return connect_f(fd, addr, addrlen);
   }
 
+  // 调用系统的connect函数，由于套接字是非阻塞的，这里会直接返回EINPROGRESS错误。
   size_t n = connect_f(fd, addr, addrlen);
   if (n == 0) {
     return 0;
@@ -268,7 +277,7 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
   // std::shared_ptr<timer_info> tinfo(new timer_info);
   std::shared_ptr<timer_info> tinfo = std::make_shared<timer_info>();
   std::weak_ptr<timer_info> winfo(tinfo);
-
+  // 如果超时参数有效，则添加一个条件定时器，在定时时间到后通过t->cancelled设置超时标志并触发一次WRITE事件。
   if (timeout_ms != (uint64_t)-1) {
     timer = iom->addConditionTimer(
         timeout_ms,
