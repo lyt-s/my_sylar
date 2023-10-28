@@ -40,16 +40,16 @@ static uint32_t CountBytes(T value) {
   return result;
 }
 
+std::vector<Address::ptr> result;
 Address::ptr Address::LookupAny(const std::string &host, int family, int type, int protocol) {
-  std::vector<Address::ptr> result;
   if (Lookup(result, host, family, type, protocol)) {
     return result[0];
   }
   return nullptr;
 }
 
-Address::ptr Address::LookupAnyIPAddress(const std::string &host, int family, int type,
-                                         int protocol) {
+std::shared_ptr<IPAddress> Address::LookupAnyIPAddress(const std::string &host, int family,
+                                                       int type, int protocol) {
   std::vector<Address::ptr> result;
   if (Lookup(result, host, family, type, protocol)) {
     for (auto &i : result) {
@@ -121,33 +121,6 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
   freeaddrinfo(results);
   return !result.empty();
 }
-<<<<<<< HEAD
-
-Address::ptr Address::LookupAny(const std::string &host, int family, int type, int protocol) {
-  std::vector<Address::ptr> result;
-  if (Lookup(result, host, family, type, protocol)) {
-    return result[0];
-  }
-  return nullptr;
-}
-
-std::shared_ptr<IPAddress> Address::LookupAnyIPAddress(const std::string &host, int family,
-                                                       int type, int protocol) {
-  std::vector<Address::ptr> result;
-  if (Lookup(result, host, family, type, protocol)) {
-    for (auto &i : result) {
-      SYLAR_LOG_DEBUG(g_logger) << "Debug address: " << i->toString();
-      IPAddress::ptr v = std::dynamic_pointer_cast<IPAddress>(i);
-      if (v) {
-        return v;
-      }
-    }
-  }
-  return nullptr;
-}
-
-=======
->>>>>>> dev_temp
 // man getifaddrs
 bool Address::GetInterfaceAddresses(
     std::multimap<std::string, std::pair<Address::ptr, uint32_t>> &result, int family) {

@@ -95,3 +95,13 @@ target_include_directories(test_socket PRIVATE  ${CMAKE_SOURCE_DIR}
             
 
 target_link_libraries(test_socket PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+#----test-----------------------------------------------------------------------
+add_executable(test_byte_array test_byte_array.cc)
+
+target_include_directories(test_byte_array PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+            
+
+target_link_libraries(test_byte_array PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
