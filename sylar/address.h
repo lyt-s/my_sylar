@@ -149,7 +149,7 @@ class Address {
 class IPAddress : public Address {
  public:
   typedef std::shared_ptr<IPAddress> ptr;
-
+  IPAddress() = default;
   /**
    * @brief 通过域名,IP,服务器名创建IPAddress
    * @param[in] address 域名,IP,服务器名等.举例: www.sylar.top
@@ -193,7 +193,7 @@ class IPAddress : public Address {
 /**
  * @brief IPv4地址
  */
-class IPv4Address : public IPAddress {
+class IPv4Address final : public IPAddress {
  public:
   typedef std::shared_ptr<IPv4Address> ptr;
 
@@ -236,7 +236,7 @@ class IPv4Address : public IPAddress {
 /**
  * @brief IPv6地址
  */
-class IPv6Address : public IPAddress {
+class IPv6Address final : public IPAddress {
  public:
   typedef std::shared_ptr<IPv6Address> ptr;
   /**
@@ -281,7 +281,7 @@ class IPv6Address : public IPAddress {
 /**
  * @brief UnixSocket地址
  */
-class UnixAddress : public Address {
+class UnixAddress final : public Address {
  public:
   typedef std::shared_ptr<UnixAddress> ptr;
 
@@ -311,7 +311,7 @@ class UnixAddress : public Address {
 /**
  * @brief 未知地址
  */
-class UnknownAddress : public Address {
+class UnknownAddress final : public Address {
  public:
   typedef std::shared_ptr<UnknownAddress> ptr;
   UnknownAddress(int family);

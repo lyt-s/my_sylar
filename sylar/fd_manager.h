@@ -59,7 +59,6 @@ class FdCtx : public std::enable_shared_from_this<FdCtx> {
   uint64_t m_recvTimeout;
   /// 写超时时间毫秒
   uint64_t m_sendTimeout;
-  // sylar::IOManager *m_iomanager;
 };
 
 class FdManager {
@@ -75,7 +74,7 @@ class FdManager {
   std::vector<FdCtx::ptr> m_datas;
 };
 
-// 单例
+/// 文件句柄单例
 typedef Singleton<FdManager> FdMgr;
 }  // namespace sylar
 #endif  // FD_MANAGER_H_

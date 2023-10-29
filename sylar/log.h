@@ -546,7 +546,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
 /**
  * @brief 输出到控制台的Appender
  */
-class StdoutLogAppender : public LogAppender {
+class StdoutLogAppender final : public LogAppender {
  public:
   typedef std::shared_ptr<StdoutLogAppender> ptr;
   void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
@@ -556,7 +556,7 @@ class StdoutLogAppender : public LogAppender {
 /**
  * @brief 输出到文件的Appender
  */
-class FileLogAppender : public LogAppender {
+class FileLogAppender final : public LogAppender {
  public:
   typedef std::shared_ptr<FileLogAppender> ptr;
 

@@ -174,10 +174,14 @@ bool Address::GetInterfaceAddresses(std::vector<std::pair<Address::ptr, uint32_t
                                     const std::string &iface, int family) {
   if (iface.empty() || iface == "*") {
     if (family == AF_INET || family == AF_UNSPEC) {
-      result.push_back(std::make_pair(Address::ptr(new IPv4Address()), 0u));
+      // result.push_back(std::make_pair(Address::ptr(new IPv4Address()), 0u));
+      result.push_back(
+          std::make_pair(std::dynamic_pointer_cast<Address>(std::make_shared<IPv4Address>()), 0u));
     }
     if (family == AF_INET6 || family == AF_UNSPEC) {
-      result.push_back(std::make_pair(Address::ptr(new IPv6Address()), 0u));
+      // result.push_back(std::make_pair(Address::ptr(new IPv6Address()), 0u));
+      result.push_back(
+          std::make_pair(std::dynamic_pointer_cast<Address>(std::make_shared<IPv6Address>()), 0u));
     }
     return true;
   }
@@ -282,7 +286,8 @@ IPAddress::ptr IPAddress::Create(const char *address, uint16_t port) {
 // IPv4
 
 IPv4Address::ptr IPv4Address::Create(const char *address, uint16_t port) {
-  IPv4Address::ptr rt(new IPv4Address);
+  // IPv4Address::ptr rt(new IPv4Address);
+  IPv4Address::ptr rt = std::make_shared<IPv4Address>();
   rt->m_addr.sin_port = byteswapOnBigEndian(port);
   int result = inet_pton(AF_INET, address, &rt->m_addr.sin_addr);
   if (result <= 0) {
@@ -299,7 +304,7 @@ IPv4Address::IPv4Address(uint32_t address, uint16_t port) {
   // todo
   memset(&m_addr, 0, sizeof(m_addr));
   m_addr.sin_family = AF_INET;
-  m_addr.sin_port = byteswapOnBigEndian(port);  //转成网络字节序
+  m_addr.sin_port = byteswapOnBigEndian(port);  // 转成网络字节序
   m_addr.sin_addr.s_addr = byteswapOnBigEndian(address);
 }
 
@@ -335,7 +340,8 @@ IPAddress::ptr IPv4Address::networdAddress(uint32_t prefix_len) {
   sockaddr_in baddr(m_addr);
   baddr.sin_addr.s_addr &= byteswapOnBigEndian(CreateMask<uint32_t>(prefix_len));
   // todo
-  return IPv4Address::ptr(new IPv4Address(baddr));
+  // return IPv4Address::ptr(new IPv4Address(baddr));
+  return std::make_shared<IPv4Address>(baddr);
 }
 
 IPAddress::ptr IPv4Address::subnetMask(uint32_t prefix_len) {
@@ -343,7 +349,8 @@ IPAddress::ptr IPv4Address::subnetMask(uint32_t prefix_len) {
   memset(&subnet, 0, sizeof(subnet));
   subnet.sin_family = AF_INET;
   subnet.sin_addr.s_addr = ~byteswapOnBigEndian(CreateMask<uint32_t>(prefix_len));
-  return IPv4Address::ptr(new IPv4Address(subnet));
+  // return IPv4Address::ptr(new IPv4Address(subnet));
+  return std::make_shared<IPv4Address>(subnet);
 }
 
 uint32_t IPv4Address::getPort() const { return byteswapOnBigEndian(m_addr.sin_port); }
@@ -352,7 +359,8 @@ void IPv4Address::setPort(uint16_t v) { m_addr.sin_port = byteswapOnBigEndian(v)
 // IPv6
 IPv6Address::ptr IPv6Address::Create(const char *address, uint16_t port) {
   // todo
-  IPv6Address::ptr rt(new IPv6Address);
+  // IPv6Address::ptr rt(new IPv6Address);
+  IPv6Address::ptr rt = std::make_shared<IPv6Address>();
   rt->m_addr.sin6_port = byteswapOnBigEndian(port);
   int result = inet_pton(AF_INET6, address, &rt->m_addr.sin6_addr);
   if (result <= 0) {
@@ -374,7 +382,7 @@ IPv6Address::IPv6Address(const uint8_t address[16], uint16_t port) {
   // todo
   memset(&m_addr, 0, sizeof(m_addr));
   m_addr.sin6_family = AF_INET6;
-  m_addr.sin6_port = byteswapOnBigEndian(port);  //转成网络字节序
+  m_addr.sin6_port = byteswapOnBigEndian(port);  // 转成网络字节序
   // add s6_addr
   memcpy(&m_addr.sin6_addr.s6_addr, address, 16);
 }
@@ -436,7 +444,8 @@ IPAddress::ptr IPv6Address::subnetMask(uint32_t prefix_len) {
   for (uint32_t i = 0; i < prefix_len / 8; ++i) {
     subnet.sin6_addr.s6_addr[i] = 0xFF;
   }
-  return IPv6Address::ptr(new IPv6Address(subnet));
+  // return IPv6Address::ptr(new IPv6Address(subnet));
+  return std::make_shared<IPv6Address>(subnet);
 }
 
 uint32_t IPv6Address::getPort() const { return byteswapOnBigEndian(m_addr.sin6_port); }

@@ -101,8 +101,8 @@ Fiber::~Fiber() {
   SYLAR_LOG_DEBUG(g_logger) << "Fiber::~Fiber id= " << m_id;
 }
 
-//重置协程函数，并重置状态
-// INIT，TERM, EXCEPT
+// 重置协程函数，并重置状态
+//  INIT，TERM, EXCEPT
 void Fiber::reset(std::function<void()> cb) {
   SYLAR_ASSERT(m_stack);
   SYLAR_ASSERT(m_state == TERM || m_state == EXCEPT || m_state == INIT);
@@ -157,7 +157,7 @@ void Fiber::swapOut() {
   }
 }
 
-//设置当前协程
+// 设置当前协程
 void Fiber::SetThis(Fiber *f) { t_fiber = f; }
 
 /**
@@ -172,6 +172,7 @@ sylar::Fiber::ptr Fiber::GetThis() {
     return t_fiber->shared_from_this();
   }
   Fiber::ptr main_fiber(new Fiber);
+  // Fiber::ptr main_fiber = std::make_shared<Fiber>();  // fiber构造函数为私有
   SYLAR_ASSERT(t_fiber == main_fiber.get());
   t_threadFiber = main_fiber;
   return t_fiber->shared_from_this();
@@ -186,7 +187,7 @@ void Fiber::YieldToReady() {
   cur->swapOut();
 }
 
-//协程切换到后台，并且设置为Hold状态
+// 协程切换到后台，并且设置为Hold状态
 void Fiber::YieldToHold() {
   Fiber::ptr cur = GetThis();
   SYLAR_ASSERT(cur->m_state == EXEC);

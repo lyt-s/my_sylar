@@ -5,7 +5,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # 修改log生成绝对路径改为相对路径  重定义 __FILE__
 include(cmake/utils.cmake)
- set(CMAKE_C_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated-declarations")
+set(CMAKE_C_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated-declarations")
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic  -O3  -fPIC -g -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined")
 #-------------------------------------------------------------------------------
 # Find packages in the './third_party' directory
