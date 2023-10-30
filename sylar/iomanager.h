@@ -14,8 +14,9 @@
 #include "schedule.h"
 #include "thread.h"
 #include "timer.h"
+
 namespace sylar {
-class IOManager : public Scheduler, public TimerManager {
+class IOManager final : public Scheduler, public TimerManager {
  public:
   typedef std::shared_ptr<IOManager> ptr;
   typedef RWMutex RWMutexType;
@@ -78,6 +79,12 @@ class IOManager : public Scheduler, public TimerManager {
   };
 
  public:
+  /**
+   * @brief 构造函数
+   * @param[in] threads 线程数量
+   * @param[in] use_caller 是否将调用线程包含进去
+   * @param[in] name 调度器的名称
+   */
   IOManager(size_t threads = 1, bool use_caller = true, const std::string &name = " ");
   ~IOManager();
 
@@ -94,7 +101,7 @@ class IOManager : public Scheduler, public TimerManager {
   // 协程调度是否应该终止
   bool stopping() override;
   void idle() override;
-  void onTimerInsertAtFront() override;
+  void onTimerInsertedAtFront() override;
 
   void contextResize(size_t size);
   bool stopping(uint64_t &timeout);

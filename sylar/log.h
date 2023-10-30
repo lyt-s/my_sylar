@@ -21,6 +21,7 @@
                           logger, level, __FILE__, __LINE__, 0, sylar::GetThreadId(), \
                           sylar::GetFiberId(), time(0), sylar::Thread::GetName())))   \
       .getSS()
+
 /**
  * @brief 使用流式方式将日志级别debug的日志写入到logger
  */
@@ -534,7 +535,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
   LogLevel::Level m_level;
   /// Mutex
   MutexType m_mutex;
-  /// 日志目标集合
+  /// 日志目标集合 map
   std::list<LogAppender::ptr> m_appenders;
   /// 日志格式器
   LogFormatter::ptr m_formatter;
@@ -545,7 +546,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
 /**
  * @brief 输出到控制台的Appender
  */
-class StdoutLogAppender : public LogAppender {
+class StdoutLogAppender final : public LogAppender {
  public:
   typedef std::shared_ptr<StdoutLogAppender> ptr;
   void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
@@ -555,7 +556,7 @@ class StdoutLogAppender : public LogAppender {
 /**
  * @brief 输出到文件的Appender
  */
-class FileLogAppender : public LogAppender {
+class FileLogAppender final : public LogAppender {
  public:
   typedef std::shared_ptr<FileLogAppender> ptr;
 

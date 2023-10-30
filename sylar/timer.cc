@@ -77,7 +77,7 @@ bool Timer::reset(uint64_t ms, bool from_now) {
     return false;
   }
 
-  //  先移除掉，重置时间，然后塞回去--？？why
+  // 先移除掉，重置时间，然后塞回去--？？why
   // operator 是基于时间来做的，如果直接改时间，会影响他的比较位置，整个数据结构都会有问题--todo
   m_manager->m_timers.erase(it);
 
@@ -99,6 +99,9 @@ TimerManager::~TimerManager() {}
 
 Timer::ptr TimerManager::addTimer(uint64_t ms, std::function<void()> cb, bool recurring) {
   Timer::ptr timer(new Timer(ms, cb, recurring, this));
+  // Timer::ptr timer = std::make_shared<Timer>(ms, cb, recurring, this);  // timer
+  // 私有构造，无法使用make_shared
+
   RWMutexType::WriteLock lock(m_mutex);
   addTimer(timer, lock);
   return timer;
@@ -151,6 +154,7 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>> &cbs) {
     return;
   }
   Timer::ptr now_timer(new Timer(now_ms));
+  // Timer::ptr now_timer = std::make_shared<Timer>(now_ms);
   // todo
   auto it = rollover ? m_timers.end() : m_timers.lower_bound(now_timer);
 
@@ -182,7 +186,7 @@ void TimerManager::addTimer(Timer::ptr timer, RWMutexType::WriteLock &lock) {
   lock.unlock();
   // 不需要来回修改，只修改一次
   if (at_front) {
-    onTimerInsertAtFront();
+    onTimerInsertedAtFront();
   }
 }
 

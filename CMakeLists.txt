@@ -5,8 +5,8 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # 修改log生成绝对路径改为相对路径  重定义 __FILE__
 include(cmake/utils.cmake)
-# set(CMAKE_C_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated-declarations")
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic  -O3  -g -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined")
+set(CMAKE_C_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated-declarations")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic  -O3  -fPIC -g -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined")
 #-------------------------------------------------------------------------------
 # Find packages in the './third_party' directory
 include(cmake/FindPackages.cmake)
@@ -24,7 +24,7 @@ file(GLOB_RECURSE LIB_SRC sylar/*.cc)
 add_library(sylar SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(sylar) #__FILE__
 target_link_libraries(sylar PUBLIC 
-                            dl # todo
+                            dl # todo  dslym
                             pthread
                             ${Boost_LIBRARIES}
                             ${yaml-cpp_LIBRARIES})

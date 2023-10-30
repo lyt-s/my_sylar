@@ -2,13 +2,14 @@
 #define SYLAR_ENDIAN_H_
 // todo
 
+extern "C++" {
+
 #define SYLAR_LITTLE_ENDIAN 1  // 小端
 #define SYLAR_BIG_ENDIAN 2     //大端
 
 #include <byteswap.h>
 #include <cstdint>
 #include <type_traits>
-
 namespace sylar {
 template <class T>
 typename std::enable_if<sizeof(T) == sizeof(uint64_t), T>::type byteswap(T value) {
@@ -39,7 +40,6 @@ T byteswapOnLittleEndian(T t) {
 
 template <class T>
 T byteswapOnBigEndian(T t) {
-  // todo
   return byteswap(t);
 }
 
@@ -56,6 +56,8 @@ T byteswapOnBigEndian(T t) {
 }
 
 #endif
+
 }  // namespace sylar
 
+}  // extern
 #endif  // SYLAR_ENDIAN_H_

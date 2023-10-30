@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <cstdint>
+#include <memory>
 #include "hook.h"
 
 namespace sylar {
@@ -86,15 +87,11 @@ FdCtx::ptr FdManager::get(int fd, bool auto_create) {
       return m_datas[fd];
     }
   }
-
+  // 需要创建的情况
   lock.unlock();
   RWMutexType::WriteLock lock2(m_mutex);
-  // bug
-  FdCtx::ptr ctx(new FdCtx(fd));
-  // 越界了
-  if (fd >= (int)m_datas.size()) {
-    m_datas.resize(fd * 1.5);
-  }
+  // FdCtx::ptr ctx(new FdCtx(fd));
+  FdCtx::ptr ctx = std::make_shared<FdCtx>(fd);
   m_datas[fd] = ctx;
   return ctx;
 }

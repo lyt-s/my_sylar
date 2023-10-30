@@ -1,3 +1,10 @@
+/*
+ * @Date: 2023-10-21 22:24:04
+ * @LastEditors: lyt-s 1814666859@qq.com
+ * @LastEditTime: 2023-10-25 19:21:31
+ * @FilePath: /my_sylar/sylar/config.cc
+ * @Description:  
+ */
 #include "config.h"
 
 #include <algorithm>
@@ -55,6 +62,11 @@ void Config::LoadFromYaml(const YAML::Node &root) {
   }
 }
 
+/**
+ * @description: 
+ * @param {function<void(ConfigVarBase::ptr)>} cb
+ * @return {*}
+ */
 void Config::Visit(std::function<void(ConfigVarBase::ptr)> cb) {
   RWMutexType::ReadLock lock(GetMutex());
   ConfigVarMap &m = GetDatas();

@@ -14,14 +14,14 @@ void test_fiber() {
   // sleep(1);  // bug 在这里  死锁了
   if (--s_count >= 0) {
     // 在指定线程执行
-    sylar::Scheduler::GetThis()->schedule(&test_fiber);
+    sylar::Scheduler::GetThis()->schedule(&test_fiber, sylar::GetThreadId());
   }
 }
 int main() {
   SYLAR_LOG_INFO(g_logger) << "main";
   // // bug--已解决
-  sylar::Scheduler sc(1, true, "test");
-  // sylar::Scheduler sc(2, true, "test");
+  // sylar::Scheduler sc(1, true, "test");
+  sylar::Scheduler sc(2, true, "test");
 
   sc.start();
   // sleep(2);

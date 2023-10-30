@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 #include "fiber.h"
@@ -195,6 +196,7 @@ void Scheduler::idle() {
 // 这个run 一个线程只会有一个协程来执行
 // 一个是use_caller的线程在run执行,线程池里面自己创建的线程也在run中执行
 void Scheduler::run() {
+  // set_hook_enable(true);
   // 设置当前的协程调度器
   SYLAR_LOG_INFO(g_logger) << "run";
   set_hook_enable(true);
@@ -207,7 +209,8 @@ void Scheduler::run() {
     t_scheduler_fiber = Fiber::GetThis().get();
   }
 
-  Fiber::ptr idle_fiber(new Fiber(std::bind(&Scheduler::idle, this)));
+  // Fiber::ptr idle_fiber(new Fiber(std::bind(&Scheduler::idle, this)));
+  Fiber::ptr idle_fiber = std::make_shared<Fiber>(std::bind(&Scheduler::idle, this));
   Fiber::ptr cb_fiber;
 
   // 协程和线程
@@ -248,7 +251,7 @@ void Scheduler::run() {
       // tickle_me |= it != m_fibers.end(); todo
     }
 
-    //取出了一个需要执行任务，唤醒其他线程
+    // 取出了一个需要执行任务，唤醒其他线程
     if (tickle_me) {
       tickle();  //
     }

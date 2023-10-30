@@ -76,3 +76,52 @@ target_include_directories(test_hook PRIVATE  ${CMAKE_SOURCE_DIR}
 
 
 target_link_libraries(test_hook PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+#----test-----------------------------------------------------------------------
+add_executable(test_address test_address.cc)
+
+target_include_directories(test_address PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+
+target_link_libraries(test_address PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+#----test-----------------------------------------------------------------------
+add_executable(test_socket test_socket.cc)
+
+target_include_directories(test_socket PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+            
+
+target_link_libraries(test_socket PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+#----test-----------------------------------------------------------------------
+add_executable(test_byte_array test_byte_array.cc)
+
+target_include_directories(test_byte_array PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+            
+
+target_link_libraries(test_byte_array PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+#----test-----------------------------------------------------------------------
+add_executable(test_http test_http.cc)
+
+target_include_directories(test_http PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+            
+
+target_link_libraries(test_http PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+#----test-----------------------------------------------------------------------
+add_executable(test_http_parser test_http_parser.cc)
+
+target_include_directories(test_http_parser PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+            
+
+target_link_libraries(test_http_parser PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
