@@ -155,12 +155,12 @@ bool Socket::init(int sock) {
 bool Socket::bind(const Address::ptr addr) {
   if (!isVaild()) {
     newSock();
-    if (SYLAR_UNLICKLY(!isVaild())) {
+    if (SYLAR_UNLIKELY(!isVaild())) {
       return false;
     }
   }
 
-  if (SYLAR_UNLICKLY(addr->getFamily() != m_family)) {
+  if (SYLAR_UNLIKELY(addr->getFamily() != m_family)) {
     SYLAR_LOG_ERROR(g_logger)
         << "bind sock.family(" << m_family << ") addr.family("
         << addr->getFamily() << ") not equal, addr=" << addr->toString();
@@ -178,14 +178,14 @@ bool Socket::bind(const Address::ptr addr) {
 bool Socket::connect(const Address::ptr addr, uint64_t timeout_ms) {
   if (!isVaild()) {
     newSock();
-    if (SYLAR_UNLICKLY(!isVaild())) {
+    if (SYLAR_UNLIKELY(!isVaild())) {
       return false;
     }
   }
   SYLAR_LOG_DEBUG(g_logger) << "debug addr->getFamily= " << addr->getFamily();
   SYLAR_LOG_DEBUG(g_logger) << "debug m_family= " << m_family;
   // 括号写错位置了
-  if (SYLAR_UNLICKLY(addr->getFamily() != m_family)) {
+  if (SYLAR_UNLIKELY(addr->getFamily() != m_family)) {
     SYLAR_LOG_ERROR(g_logger)
         << "connect sock.family(" << m_family << ") addr.family("
         << addr->getFamily() << ") not equal, addr=" << addr->toString();
@@ -446,7 +446,7 @@ void Socket::initSock() {
 
 void Socket::newSock() {
   m_sock = socket(m_family, m_type, m_protocol);
-  if (SYLAR_LICKLY(m_sock != -1)) {
+  if (SYLAR_LIKELY(m_sock != -1)) {
     initSock();
   } else {
     SYLAR_LOG_ERROR(g_logger)

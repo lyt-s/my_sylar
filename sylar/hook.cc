@@ -142,9 +142,9 @@ retry:
           },
           winfo);
     }
-    // int c = 0;
-    // uint64_t now = 0;
 
+    /// 若读阻塞说明 缓冲区空 写阻塞 缓冲区满
+    /// 添加 可读可写事件，即可获取协程唤醒的标志
     int rt = iom->addEvent(fd, (sylar::IOManager::Event)(event));
     if (rt) {
       SYLAR_LOG_ERROR(g_logger) << hook_fun_name << " addEvent(" << fd << ", " << event << ")";
@@ -283,21 +283,32 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
         timeout_ms,
         [winfo, fd, iom]() {
           auto t = winfo.lock();
+          /// 判断tinfo条件是否存在
+          /// 或t->cancelled超时的话
           if (!t || t->cancelled) {
             return;
           }
+          /// 将条件设为超时状态
           t->cancelled = ETIMEDOUT;
+          /// 取消掉可写事件，会执行cb，由于下面注册空回调
+          /// 因此会回到该线程
           iom->cancelEvent(fd, sylar::IOManager::WRITE);
         },
         winfo);
   }
 
+  /// 注册可写事件 回调为当前协程
+  /// 说明连接成功已经可写
+  /// 非阻塞connect的完成被认为是使响应套接字可写
   int rt = iom->addEvent(fd, sylar::IOManager::WRITE);
   if (rt == 0) {
+    /// 关键点:切换出去，让出CPU执行权
     sylar::Fiber::YieldToHold();
     if (timer) {
       timer->cancel();
     }
+    /// 由于 iom->cancelEvent(fd, pudge::IOManager::WRITE);引起
+    /// 则会触发如下的超时
     if (tinfo->cancelled) {
       errno = tinfo->cancelled;
       return -1;
@@ -389,7 +400,9 @@ int close(int fd) {
   if (ctx) {
     auto iom = sylar::IOManager::GetThis();
     if (iom) {
+      // 取消掉fd上的全部事件
       iom->cancelAll(fd);
+      // 删除fd的上下文
       sylar::FdMgr::GetInstance()->del(fd);
     }
   }
@@ -502,7 +515,9 @@ int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t
     // return setsockopt(sockfd, level, optname, optval, optlen); // 死循环
     return setsockopt_f(sockfd, level, optname, optval, optlen);
   }
+
   if (level == SOL_SOCKET) {
+    // 这里要特殊处理SO_RECVTIMEO和SO_SNDTIMEO，在应用层记录套接字的读写超时，方便协程调度器获取。
     if (optname == SO_RCVTIMEO || optname == SO_SNDTIMEO) {
       sylar::FdCtx::ptr ctx = sylar::FdMgr::GetInstance()->get(sockfd);
       if (ctx) {
