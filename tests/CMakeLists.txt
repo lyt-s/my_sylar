@@ -125,3 +125,13 @@ target_include_directories(test_http_parser PRIVATE  ${CMAKE_SOURCE_DIR}
             
 
 target_link_libraries(test_http_parser PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+#----test-----------------------------------------------------------------------
+add_executable(test_tcp_server test_tcp_server.cc)
+
+target_include_directories(test_tcp_server PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+            
+
+target_link_libraries(test_tcp_server PRIVATE  dl pthread sylar ${Boost_LIBRARIES})

@@ -67,8 +67,10 @@ class Socket : public std::enable_shared_from_this<Socket>, Noncopyable {
 
   int send(const void *buffer, size_t length, int flags = 0);
   int send(const iovec *buffers, size_t length, int flags = 0);
-  int sendTo(const void *buffer, size_t length, const Address::ptr to, int flags = 0);
-  int sendTo(const iovec *buffers, size_t length, const Address::ptr to, int flags = 0);
+  int sendTo(const void *buffer, size_t length, const Address::ptr to,
+             int flags = 0);
+  int sendTo(const iovec *buffers, size_t length, const Address::ptr to,
+             int flags = 0);
 
   int recv(void *buffer, size_t length, int flags = 0);
   int recv(iovec *buffers, size_t length, int flags = 0);
@@ -108,5 +110,8 @@ class Socket : public std::enable_shared_from_this<Socket>, Noncopyable {
   Address::ptr m_localAddress;
   Address::ptr m_remoteAddress;
 };
+
+// todo
+std::ostream &operator<<(std::ostream &os, const Socket &sock);
 }  // namespace sylar
 #endif
