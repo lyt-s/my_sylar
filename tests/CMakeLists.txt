@@ -135,3 +135,6 @@ target_include_directories(test_tcp_server PRIVATE  ${CMAKE_SOURCE_DIR}
             
 
 target_link_libraries(test_tcp_server PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+
+# 可执行文件输出位置
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/tests)

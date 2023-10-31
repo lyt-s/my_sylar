@@ -41,7 +41,9 @@ ByteArray::~ByteArray() {
   }
 }
 
-bool ByteArray::isLittleEndian() const { return m_endian == SYLAR_LITTLE_ENDIAN; }
+bool ByteArray::isLittleEndian() const {
+  return m_endian == SYLAR_LITTLE_ENDIAN;
+}
 void ByteArray::SetIsLittleEndian(bool val) {
   if (val) {
     m_endian = SYLAR_LITTLE_ENDIAN;
@@ -122,7 +124,9 @@ static int32_t DecodeZigzag32(const uint32_t &v) { return (v >> 1) ^ -(v & 1); }
 static int64_t DecodeZigzag64(const uint64_t &v) { return (v >> 1) ^ -(v & 1); }
 // 可变长度
 
-void ByteArray::writeInt32(int32_t value) { writeUint32(EncodeZigzag32(value)); }
+void ByteArray::writeInt32(int32_t value) {
+  writeUint32(EncodeZigzag32(value));
+}
 void ByteArray::writeUint32(uint32_t value) {
   uint8_t tmp[5];
   // todo  谷歌protobuf 压缩方式
@@ -135,7 +139,9 @@ void ByteArray::writeUint32(uint32_t value) {
   write(tmp, i);
 }
 
-void ByteArray::writeInt64(int64_t value) { writeUint64(EncodeZigzag64(value)); }
+void ByteArray::writeInt64(int64_t value) {
+  writeUint64(EncodeZigzag64(value));
+}
 
 void ByteArray::writeUint64(uint64_t value) {
   uint8_t tmp[10];
@@ -480,10 +486,11 @@ void ByteArray::read(void *buf, size_t size, size_t position) const {
 }
 
 void ByteArray::setPosition(size_t v) {
-  if (v > m_size) {
+  if (v > m_capacity) {
     throw std::out_of_range("set_position out of range");
   }
   m_position = v;
+  // 处理异常 echoserver  todo
   if (m_position > m_size) {
     m_size = m_position;
   }
@@ -502,8 +509,8 @@ bool ByteArray::writeToFile(const std::string &name) const {
   ofs.open(name, std::ios::trunc | std::ios::binary);
   // 打开失败
   if (!ofs) {
-    SYLAR_LOG_ERROR(g_logger) << "WriteToFile name" << name << "error, error=" << errno
-                              << strerror(errno);
+    SYLAR_LOG_ERROR(g_logger) << "WriteToFile name" << name
+                              << "error, error=" << errno << strerror(errno);
     return false;
   }
 
@@ -514,7 +521,8 @@ bool ByteArray::writeToFile(const std::string &name) const {
     int diff = pos % m_baseSize;
     // 首先取出偏移位，计算长度
     // 如果读的长度比每个链表的长度还大，取链表长度，否则取读的长度
-    int64_t len = (read_size > (int64_t)m_baseSize ? m_baseSize : read_size) - diff;
+    int64_t len =
+        (read_size > (int64_t)m_baseSize ? m_baseSize : read_size) - diff;
 
     ofs.write(cur->ptr + diff, len);
     cur = cur->next;
@@ -528,12 +536,13 @@ bool ByteArray::readFromFile(const std::string &name) {
   std::ifstream ifs;
   ifs.open(name, std::ios::binary);
   if (!ifs) {
-    SYLAR_LOG_ERROR(g_logger) << "readToFile name" << name << "error, error=" << errno
-                              << strerror(errno);
+    SYLAR_LOG_ERROR(g_logger) << "readToFile name" << name
+                              << "error, error=" << errno << strerror(errno);
     return false;
   }
 
-  std::shared_ptr<char> buff(new char[m_baseSize], [](char *ptr) { delete[] ptr; });
+  std::shared_ptr<char> buff(new char[m_baseSize],
+                             [](char *ptr) { delete[] ptr; });
   while (!ifs.eof()) {
     ifs.read(buff.get(), m_baseSize);
     // ifs.gcount真正读到的长度
@@ -556,7 +565,8 @@ void ByteArray::addCapacity(size_t size) {
   // 额外增加容量
   size = size - old_cap;
   // 额外增加的是一个节点的多少倍，剩下处理的(不足一个节点的)，比老的大，要再加一个(old已经减去了)？？
-  size_t count = (size / m_baseSize) + (((size % m_baseSize) > old_cap) ? 1 : 0);
+  size_t count =
+      (size / m_baseSize) + (((size % m_baseSize) > old_cap) ? 1 : 0);
   Node *tmp = m_root;
   // 找到为空的节点的上一个节点
   while (tmp->next) {
@@ -598,13 +608,15 @@ std::string ByteArray::toHexString() const {
       ss << std::endl;
     }
     // todo iomanip
-    ss << std::setw(2) << std::setfill('0') << std::hex << (int)(uint8_t)str[i] << " ";
+    ss << std::setw(2) << std::setfill('0') << std::hex << (int)(uint8_t)str[i]
+       << " ";
   }
 
   return ss.str();
 }
 
-uint64_t ByteArray::getReadBuffers(std::vector<iovec> &buffers, uint64_t len) const {
+uint64_t ByteArray::getReadBuffers(std::vector<iovec> &buffers,
+                                   uint64_t len) const {
   len = len > getReadSize() ? getReadSize() : len;
   if (len == 0) {
     return 0;
@@ -615,8 +627,8 @@ uint64_t ByteArray::getReadBuffers(std::vector<iovec> &buffers, uint64_t len) co
   size_t npos = m_position % m_baseSize;
   size_t ncap = m_cur->size - npos;
   struct iovec iov;
-
   Node *cur = m_cur;
+
   while (len > 0) {
     if (ncap >= len) {
       iov.iov_base = cur->ptr + npos;

@@ -38,8 +38,8 @@ target_include_directories(sylar    PUBLIC
 # add_library(sylar_static STATIC ${LIB_SRC})
 # SET_TARGET_PROPERTIES(sylar_static PROPERTIES OUTPUT_NAME "sylar"
 
-# 可执行文件输出位置
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+# # 可执行文件输出位置
+# SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 # lib文件输出位置
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
@@ -50,3 +50,4 @@ SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 # test
 add_subdirectory(tests)
+add_subdirectory(examples)
