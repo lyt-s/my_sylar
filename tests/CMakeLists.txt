@@ -1,4 +1,7 @@
 
+# 可执行文件输出位置
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/tests)
+
 #----test-----------------------------------------------------------------------
 add_executable(test test.cc)
 add_dependencies(test sylar)
@@ -60,7 +63,7 @@ target_include_directories(test_schedule PRIVATE  ${CMAKE_SOURCE_DIR}
 target_link_libraries(test_schedule PRIVATE dl pthread sylar ${Boost_LIBRARIES})
 #----test-----------------------------------------------------------------------
 add_executable(test_iomanager test_iomanager.cc)
-
+force_redefine_file_macro_for_sources(test_iomanager) #__FILE__
 target_include_directories(test_iomanager PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
@@ -69,7 +72,7 @@ target_include_directories(test_iomanager PRIVATE  ${CMAKE_SOURCE_DIR}
 target_link_libraries(test_iomanager PRIVATE dl pthread sylar ${Boost_LIBRARIES})
 #----test-----------------------------------------------------------------------
 add_executable(test_hook test_hook.cc)
-
+force_redefine_file_macro_for_sources(test_hook) #__FILE__
 target_include_directories(test_hook PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
@@ -78,7 +81,7 @@ target_include_directories(test_hook PRIVATE  ${CMAKE_SOURCE_DIR}
 target_link_libraries(test_hook PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
 #----test-----------------------------------------------------------------------
 add_executable(test_address test_address.cc)
-
+force_redefine_file_macro_for_sources(test_address) #__FILE__
 target_include_directories(test_address PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
@@ -87,7 +90,7 @@ target_include_directories(test_address PRIVATE  ${CMAKE_SOURCE_DIR}
 target_link_libraries(test_address PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
 #----test-----------------------------------------------------------------------
 add_executable(test_socket test_socket.cc)
-
+force_redefine_file_macro_for_sources(test_socket) #__FILE__
 target_include_directories(test_socket PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
@@ -97,7 +100,7 @@ target_include_directories(test_socket PRIVATE  ${CMAKE_SOURCE_DIR}
 target_link_libraries(test_socket PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
 #----test-----------------------------------------------------------------------
 add_executable(test_byte_array test_byte_array.cc)
-
+force_redefine_file_macro_for_sources(test_byte_array) #__FILE__
 target_include_directories(test_byte_array PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
@@ -107,7 +110,7 @@ target_include_directories(test_byte_array PRIVATE  ${CMAKE_SOURCE_DIR}
 target_link_libraries(test_byte_array PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
 #----test-----------------------------------------------------------------------
 add_executable(test_http test_http.cc)
-
+force_redefine_file_macro_for_sources(test_http) #__FILE__
 target_include_directories(test_http PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
@@ -117,7 +120,7 @@ target_include_directories(test_http PRIVATE  ${CMAKE_SOURCE_DIR}
 target_link_libraries(test_http PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
 #----test-----------------------------------------------------------------------
 add_executable(test_http_parser test_http_parser.cc)
-
+force_redefine_file_macro_for_sources(test_http_parser) #__FILE__
 target_include_directories(test_http_parser PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
@@ -127,7 +130,7 @@ target_include_directories(test_http_parser PRIVATE  ${CMAKE_SOURCE_DIR}
 target_link_libraries(test_http_parser PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
 #----test-----------------------------------------------------------------------
 add_executable(test_tcp_server test_tcp_server.cc)
-
+force_redefine_file_macro_for_sources(test_tcp_server) #__FILE__
 target_include_directories(test_tcp_server PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
@@ -136,5 +139,3 @@ target_include_directories(test_tcp_server PRIVATE  ${CMAKE_SOURCE_DIR}
 
 target_link_libraries(test_tcp_server PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
 
-# 可执行文件输出位置
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/tests)

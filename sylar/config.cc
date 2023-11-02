@@ -3,7 +3,7 @@
  * @LastEditors: lyt-s 1814666859@qq.com
  * @LastEditTime: 2023-10-25 19:21:31
  * @FilePath: /my_sylar/sylar/config.cc
- * @Description:  
+ * @Description:
  */
 #include "config.h"
 
@@ -22,21 +22,37 @@ ConfigVarBase::ptr Config::LookupBase(const std::string &name) {
   return it == GetDatas().end() ? nullptr : it->second;
 }
 
-static void ListAllMember(const std::string &prefix, const YAML::Node &node,
-                          std::list<std::pair<std::string, const YAML::Node>> &output) {
-  if (prefix.find_first_not_of("abcdefghijklmnopqrstuvwxyz._12345678") != std::string::npos) {
-    SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << "config invalid name: " << prefix << " : " << node;
+/**
+ * @brief
+ *
+ * @param prefix
+ * @param node
+ * @param output
+ */
+static void ListAllMember(
+    const std::string &prefix, const YAML::Node &node,
+    std::list<std::pair<std::string, const YAML::Node>> &output) {
+  if (prefix.find_first_not_of("abcdefghijklmnopqrstuvwxyz._12345678") !=
+      std::string::npos) {
+    SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
+        << "config invalid name: " << prefix << " : " << node;
     return;
   }
   output.push_back(std::make_pair(prefix, node));
   if (node.IsMap()) {
     for (auto it = node.begin(); it != node.end(); ++it) {
-      ListAllMember(prefix.empty() ? it->first.Scalar() : prefix + "." + it->first.Scalar(),
+      ListAllMember(prefix.empty() ? it->first.Scalar()
+                                   : prefix + "." + it->first.Scalar(),
                     it->second, output);
     }
   }
 }
 
+/**
+ * @brief
+ *
+ * @param root
+ */
 void Config::LoadFromYaml(const YAML::Node &root) {
   std::list<std::pair<std::string, const YAML::Node>> all_nodes;
   ListAllMember("", root, all_nodes);
@@ -63,9 +79,8 @@ void Config::LoadFromYaml(const YAML::Node &root) {
 }
 
 /**
- * @description: 
- * @param {function<void(ConfigVarBase::ptr)>} cb
- * @return {*}
+ * @brief 遍历配置模块里面所有配置项
+ * @param[in] cb 配置项回调函数
  */
 void Config::Visit(std::function<void(ConfigVarBase::ptr)> cb) {
   RWMutexType::ReadLock lock(GetMutex());
