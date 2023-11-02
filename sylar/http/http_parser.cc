@@ -26,6 +26,17 @@ static sylar::ConfigVar<uint64_t>::ptr g_http_request_max_body_size =
 
 static uint64_t s_http_request_buffer_size = 0;
 static uint64_t s_http_request_max_body_size = 0;
+
+uint64_t HttpRequestParse::GetHttpRequestBufferSize() {
+  return s_http_request_buffer_size;
+}
+uint64_t HttpRequestParse::GetHttpRequestMaxBodySize() {
+  return s_http_request_max_body_size;
+}
+
+// 不会污染全局的命名空间
+namespace {
+
 struct _RequestSizeIniter {
   _RequestSizeIniter() {
     // getValue 加锁
@@ -41,6 +52,8 @@ struct _RequestSizeIniter {
 
 // 进main函数之前 就注册好了
 static _RequestSizeIniter _init;
+
+}  // namespace
 
 void on_request_method(void *data, const char *at, size_t length) {
   HttpRequestParse *parser = static_cast<HttpRequestParse *>(data);

@@ -341,6 +341,9 @@ class HttpResponse {
   MapType m_headers;
 };
 
+std::ostream &operator<<(std::ostream &os, const HttpRequest &req);
+std::ostream &operator<<(std::ostream &os, const HttpResponse &rsp);
+
 }  // namespace http
 }  // namespace sylar
 #endif  // SYLAR_HTTP_H_
