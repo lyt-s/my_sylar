@@ -1,7 +1,7 @@
 #include <iostream>
 #include "sylar/http/http.h"
 #include "sylar/http/http_parser.h"
-
+#include "sylar/stream.h"
 void test() {
   sylar::http::HttpRequest::ptr req(new sylar::http::HttpRequest);
   req->setHeader("host", "www.sylar.top");

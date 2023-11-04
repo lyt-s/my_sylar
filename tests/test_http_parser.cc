@@ -3,7 +3,7 @@
 #include "sylar/http/http.h"
 #include "sylar/http/http_parser.h"
 #include "sylar/log.h"
-
+#include "sylar/stream.h"
 static sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
 
 const char test_request_data[] =

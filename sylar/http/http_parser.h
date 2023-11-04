@@ -1,5 +1,5 @@
-#ifndef SYLAR_HTTP_PARSER_H_
-#define SYLAR_HTTP_PARSER_H_
+#ifndef SYLAR_HTTP_HTTP_PARSER_H_
+#define SYLAR_HTTP_HTTP_PARSER_H_
 #include <cstdint>
 #include "http.h"
 #include "http11_parser.h"
@@ -49,6 +49,10 @@ class HttpResponseParser {
 
   uint64_t getContentLength();
 
+ public:
+  static uint64_t GetHttpResponsetBufferSize();
+  static uint64_t GetHttpResponseMaxBodySize();
+
  private:
   httpclient_parser m_parser;
   HttpResponse::ptr m_data;
@@ -59,4 +63,4 @@ class HttpResponseParser {
 }  // namespace http
 }  // namespace sylar
 
-#endif  // SYLAR_HTTP_PARSER_H_
+#endif  // SYLAR_HTTP_HTTP_PARSER_H_

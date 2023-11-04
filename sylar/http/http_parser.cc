@@ -24,16 +24,32 @@ static sylar::ConfigVar<uint64_t>::ptr g_http_request_max_body_size =
                           static_cast<uint64_t>(64 * 1024 * 1024ull),
                           "http request max_body size");
 
+static sylar::ConfigVar<uint64_t>::ptr g_http_response_buffer_size =
+    sylar::Config::Lookup("http.response.buffer_size",
+                          static_cast<uint64_t>(4 * 1024ull),
+                          "http response buffer size");
+
+static sylar::ConfigVar<uint64_t>::ptr g_http_response_max_body_size =
+    sylar::Config::Lookup("http.response.max_body_size",
+                          static_cast<uint64_t>(64 * 1024 * 1024ull),
+                          "http response max_body size");
+
 static uint64_t s_http_request_buffer_size = 0;
 static uint64_t s_http_request_max_body_size = 0;
-
+static uint64_t s_http_response_buffer_size = 0;
+static uint64_t s_http_response_max_body_size = 0;
 uint64_t HttpRequestParse::GetHttpRequestBufferSize() {
   return s_http_request_buffer_size;
 }
 uint64_t HttpRequestParse::GetHttpRequestMaxBodySize() {
   return s_http_request_max_body_size;
 }
-
+uint64_t HttpResponseParser::GetHttpResponsetBufferSize() {
+  return s_http_response_buffer_size;
+}
+uint64_t HttpResponseParser::GetHttpResponseMaxBodySize() {
+  return s_http_response_max_body_size;
+}
 // 不会污染全局的命名空间
 namespace {
 
@@ -43,9 +59,25 @@ struct _RequestSizeIniter {
     s_http_request_buffer_size = g_http_request_buffer_size->getValue();
     s_http_request_max_body_size = g_http_request_max_body_size->getValue();
 
+    s_http_response_buffer_size = g_http_request_buffer_size->getValue();
+    s_http_response_max_body_size = g_http_request_max_body_size->getValue();
+
     g_http_request_buffer_size->addListener(
         [](const uint64_t &ov, const uint64_t &nv) {
+          s_http_request_buffer_size = nv;
+        });
+    g_http_request_max_body_size->addListener(
+        [](const uint64_t &ov, const uint64_t &nv) {
           s_http_request_max_body_size = nv;
+        });
+
+    g_http_response_buffer_size->addListener(
+        [](const uint64_t &ov, const uint64_t &nv) {
+          s_http_response_buffer_size = nv;
+        });
+    g_http_response_max_body_size->addListener(
+        [](const uint64_t &ov, const uint64_t &nv) {
+          s_http_response_max_body_size = nv;
         });
   }
 };

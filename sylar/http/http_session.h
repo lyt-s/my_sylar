@@ -1,5 +1,5 @@
-#ifndef SYLAR_SESSION_H_
-#define SYLAR_SESSION_H_
+#ifndef SYLAR_HTTP_HTTP_SESSION_H_
+#define SYLAR_HTTP_HTTP_SESSION_H_
 
 #include <memory>
 #include "http/http.h"
@@ -20,4 +20,4 @@ class HttpSession : public SocketStream {
 };
 }  // namespace http
 }  // namespace sylar
-#endif  // SYLAR_SESSION_H_
+#endif  // SYLAR_HTTP_HTTP_SESSION_H_

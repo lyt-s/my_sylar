@@ -8,8 +8,7 @@ namespace sylar {
 class Stream {
  public:
   using ptr = std::shared_ptr<Stream>;
-
-  virtual ~Stream();
+  virtual ~Stream() {}
 
   virtual int read(void *buffer, size_t length) = 0;
   virtual int read(ByteArray::ptr ba, size_t length) = 0;

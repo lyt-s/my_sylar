@@ -1,4 +1,4 @@
-#include "http_session.h"
+#include "http_connection.h"
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -12,11 +12,11 @@
 namespace sylar {
 namespace http {
 
-HttpSession::HttpSession(Socket::ptr sock, bool owner)
+HttpConnection::HttpConnection(Socket::ptr sock, bool owner)
     : SocketStream(sock, owner) {}
 
-HttpRequest::ptr HttpSession::recvRequest() {
-  HttpRequestParse::ptr parser(new HttpRequestParse);
+HttpResponse::ptr HttpConnection::recvResponse() {
+  HttpResponseParser::ptr parser(new HttpResponseParser);
   // uint64_t buffer_size = HttpRequestParse::GetHttpRequestBufferSize();
 
   uint64_t buffer_size = 100;
@@ -70,7 +70,7 @@ HttpRequest::ptr HttpSession::recvRequest() {
   }
   return parser->getData();
 }
-int HttpSession::sendResponse(HttpResponse::ptr rsp) {
+int HttpConnection::sendRequest(HttpRequest::ptr rsp) {
   std::stringstream ss;
   ss << *rsp;
   std::string data = ss.str();

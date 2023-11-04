@@ -11,6 +11,7 @@
 #include "sylar/iomanager.h"
 #include "sylar/log.h"
 #include "sylar/socket.h"
+#include "sylar/stream.h"
 #include "sylar/tcp_server.h"
 
 static sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
