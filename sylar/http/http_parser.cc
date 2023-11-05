@@ -38,15 +38,19 @@ static uint64_t s_http_request_buffer_size = 0;
 static uint64_t s_http_request_max_body_size = 0;
 static uint64_t s_http_response_buffer_size = 0;
 static uint64_t s_http_response_max_body_size = 0;
-uint64_t HttpRequestParse::GetHttpRequestBufferSize() {
+
+uint64_t HttpRequestParser::GetHttpRequestBufferSize() {
   return s_http_request_buffer_size;
 }
-uint64_t HttpRequestParse::GetHttpRequestMaxBodySize() {
+
+uint64_t HttpRequestParser::GetHttpRequestMaxBodySize() {
   return s_http_request_max_body_size;
 }
-uint64_t HttpResponseParser::GetHttpResponsetBufferSize() {
+
+uint64_t HttpResponseParser::GetHttpResponseBufferSize() {
   return s_http_response_buffer_size;
 }
+
 uint64_t HttpResponseParser::GetHttpResponseMaxBodySize() {
   return s_http_response_max_body_size;
 }
@@ -59,8 +63,8 @@ struct _RequestSizeIniter {
     s_http_request_buffer_size = g_http_request_buffer_size->getValue();
     s_http_request_max_body_size = g_http_request_max_body_size->getValue();
 
-    s_http_response_buffer_size = g_http_request_buffer_size->getValue();
-    s_http_response_max_body_size = g_http_request_max_body_size->getValue();
+    s_http_response_buffer_size = g_http_response_buffer_size->getValue();
+    s_http_response_max_body_size = g_http_response_max_body_size->getValue();
 
     g_http_request_buffer_size->addListener(
         [](const uint64_t &ov, const uint64_t &nv) {
@@ -88,7 +92,7 @@ static _RequestSizeIniter _init;
 }  // namespace
 
 void on_request_method(void *data, const char *at, size_t length) {
-  HttpRequestParse *parser = static_cast<HttpRequestParse *>(data);
+  HttpRequestParser *parser = static_cast<HttpRequestParser *>(data);
   // 数据的起始位置，如果string的话，还要复制一份
   HttpMethod m = CharsToHttpMethod(at);
 
@@ -103,19 +107,19 @@ void on_request_method(void *data, const char *at, size_t length) {
 }
 void on_request_url(void *data, const char *at, size_t length) {}
 void on_request_fragment(void *data, const char *at, size_t length) {
-  HttpRequestParse *parser = static_cast<HttpRequestParse *>(data);
+  HttpRequestParser *parser = static_cast<HttpRequestParser *>(data);
   parser->getData()->setFragment(std::string(at, length));
 }
 void on_request_path(void *data, const char *at, size_t length) {
-  HttpRequestParse *parser = static_cast<HttpRequestParse *>(data);
+  HttpRequestParser *parser = static_cast<HttpRequestParser *>(data);
   parser->getData()->setPath(std::string(at, length));
 }
 void on_request_query(void *data, const char *at, size_t length) {
-  HttpRequestParse *parser = static_cast<HttpRequestParse *>(data);
+  HttpRequestParser *parser = static_cast<HttpRequestParser *>(data);
   parser->getData()->setQuery(std::string(at, length));
 }
 void on_request_version(void *data, const char *at, size_t length) {
-  HttpRequestParse *parser = static_cast<HttpRequestParse *>(data);
+  HttpRequestParser *parser = static_cast<HttpRequestParser *>(data);
   uint8_t v = 0;
   if (strncmp(at, "HTTP/1.1", length) == 0) {
     v = 0x11;
@@ -131,21 +135,21 @@ void on_request_version(void *data, const char *at, size_t length) {
   parser->getData()->setVersion(v);
 }
 void on_request_header_done(void *data, const char *at, size_t length) {
-  //   HttpRequestParse *parser = static_cast<HttpRequestParse *>(data);
+  //   HttpRequestParser *parser = static_cast<HttpRequestParser *>(data);
 }
 void on_request_http_field(void *data, const char *field, size_t flen,
                            const char *value, size_t vlen) {
-  HttpRequestParse *parser = static_cast<HttpRequestParse *>(data);
+  HttpRequestParser *parser = static_cast<HttpRequestParser *>(data);
   if (flen == 0) {
     SYLAR_LOG_WARN(g_logger) << "invaild http request field length ==0";
-    parser->setError(1002);
+    // parser->setError(1002);
     return;
   }
   parser->getData()->setHeader(std::string(field, flen),
                                std::string(value, vlen));
 }
 
-HttpRequestParse::HttpRequestParse() : m_error(0) {
+HttpRequestParser::HttpRequestParser() : m_error(0) {
   m_data.reset(new sylar::http::HttpRequest);
   http_parser_init(&m_parser);
   m_parser.request_method = on_request_method;
@@ -160,7 +164,7 @@ HttpRequestParse::HttpRequestParse() : m_error(0) {
   m_parser.data = this;
 }
 
-uint64_t HttpRequestParse::getContentLength() {
+uint64_t HttpRequestParser::getContentLength() {
   return m_data->getHeaderAs<uint64_t>("content-length", 0);
 }
 
@@ -168,7 +172,7 @@ uint64_t HttpRequestParse::getContentLength() {
 // 1: 成功
 // -1： 失败有错误
 // >0:已处理的字节数，且data有效数据为len -v
-size_t HttpRequestParse::execute(char *data, size_t len) {
+size_t HttpRequestParser::execute(char *data, size_t len) {
   size_t offset = http_parser_execute(&m_parser, data, len, 0);
   // 没有解析完
   // todo
@@ -176,10 +180,10 @@ size_t HttpRequestParse::execute(char *data, size_t len) {
   // 实际parser的数量
   return offset;
 }
-int HttpRequestParse::isFinished() const {
+int HttpRequestParser::isFinished() const {
   return http_parser_finish(const_cast<http_parser *>(&m_parser));
 }
-int HttpRequestParse::hasError() const {
+int HttpRequestParser::hasError() const {
   return m_error || http_parser_has_error(const_cast<http_parser *>(&m_parser));
 }
 
@@ -219,8 +223,8 @@ void on_response_http_field(void *data, const char *field, size_t flen,
     parser->setError(1002);
     return;
   }
-  parser->getData()->setHeaders(std::string(field, flen),
-                                std::string(value, vlen));
+  parser->getData()->setHeader(std::string(field, flen),
+                               std::string(value, vlen));
 }
 
 HttpResponseParser::HttpResponseParser() : m_error(0) {
@@ -233,11 +237,13 @@ HttpResponseParser::HttpResponseParser() : m_error(0) {
   m_parser.header_done = on_response_header_done;
   m_parser.last_chunk = on_response_last_chunk;
   m_parser.http_field = on_response_http_field;
-  // todo  未添加时，bug
   m_parser.data = this;
 }
 
-size_t HttpResponseParser::execute(char *data, size_t len) {
+size_t HttpResponseParser::execute(char *data, size_t len, bool chunck) {
+  if (chunck) {
+    httpclient_parser_init(&m_parser);
+  }
   size_t offset = httpclient_parser_execute(&m_parser, data, len, 0);
   memmove(data, data + offset, (len - offset));
   return offset;

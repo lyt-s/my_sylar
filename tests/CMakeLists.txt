@@ -145,6 +145,25 @@ target_include_directories(test_http_server PRIVATE  ${CMAKE_SOURCE_DIR}
             
 
 target_link_libraries(test_http_server PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+#----test-----------------------------------------------------------------------
+add_executable(test_http_connection test_http_connection.cc)
 
+target_include_directories(test_http_connection PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+            
+
+target_link_libraries(test_http_connection PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+#----test-----------------------------------------------------------------------
+add_executable(test_uri test_uri.cc)
+
+target_include_directories(test_uri PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+            
+
+target_link_libraries(test_uri PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
 # 可执行文件输出位置
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/tests)

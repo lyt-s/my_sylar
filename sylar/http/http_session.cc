@@ -16,33 +16,32 @@ HttpSession::HttpSession(Socket::ptr sock, bool owner)
     : SocketStream(sock, owner) {}
 
 HttpRequest::ptr HttpSession::recvRequest() {
-  HttpRequestParse::ptr parser(new HttpRequestParse);
-  // uint64_t buffer_size = HttpRequestParse::GetHttpRequestBufferSize();
-
-  uint64_t buffer_size = 100;
-  std::shared_ptr<char> buffer(
-      new char[HttpRequestParse::GetHttpRequestBufferSize()],
-      [](char *ptr) { delete[] ptr; });
-
+  HttpRequestParser::ptr parser(new HttpRequestParser);
+  uint64_t buff_size = HttpRequestParser::GetHttpRequestBufferSize();
+  // uint64_t buff_size = 100;
+  std::shared_ptr<char> buffer(new char[buff_size],
+                               [](char *ptr) { delete[] ptr; });
   char *data = buffer.get();
   int offset = 0;
 
   do {
-    int len = read(data + offset, buffer_size - offset);
+    int len = read(data + offset, buff_size - offset);
     if (len <= 0) {
+      close();
       return nullptr;
     }
     len += offset;
-    size_t nparser = parser->execute(data, len + offset);
+    size_t nparse = parser->execute(data, len);
     if (parser->hasError()) {
+      close();
       return nullptr;
     }
-    offset = len - nparser;
-    if (offset == (int64_t)buffer_size) {
+    offset = len - nparse;
+    if (offset == (int)buff_size) {
+      close();
       return nullptr;
     }
     if (parser->isFinished()) {
-      // todo
       break;
     }
   } while (true);
@@ -59,22 +58,27 @@ HttpRequest::ptr HttpSession::recvRequest() {
       len = offset;
 
     } else {
-      std::memcpy(&body[0], data, length);
-      len = offset;
+      memcpy(&body[0], data, length);
+      len = length;
     }
     length -= offset;
     if (length > 0) {
-      if (readFixSize(&body[len], length) <= 0) return nullptr;
+      if (readFixSize(&body[len], length) <= 0) {
+        close();
+        return nullptr;
+      }
     }
     parser->getData()->setBody(body);
   }
+
+  parser->getData()->init();
   return parser->getData();
 }
 int HttpSession::sendResponse(HttpResponse::ptr rsp) {
   std::stringstream ss;
   ss << *rsp;
   std::string data = ss.str();
-  return writeFixSize(ss.str().c_str(), data.size());
+  return writeFixSize(data.c_str(), data.size());
 }
 }  // namespace http
 }  // namespace sylar

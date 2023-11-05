@@ -8,6 +8,8 @@
 #include "servlet.h"
 #include <fnmatch.h>
 #include <memory>
+#include <string>
+#include <utility>
 #include "noncopyable.h"
 namespace sylar {
 namespace http {
@@ -21,7 +23,9 @@ int32_t FunctionServlet::handle(sylar::http::HttpRequest::ptr request,
   return m_cb(request, response, session);
 }
 
-ServletDispatch::ServletDispatch() : Servlet("ServletDispatch") {}
+ServletDispatch::ServletDispatch() : Servlet("ServletDispatch") {
+  m_default.reset(new NotFoundServlet("sylar"));
+}
 
 int32_t ServletDispatch::handle(sylar::http::HttpRequest::ptr request,
                                 sylar::http::HttpResponse::ptr response,
@@ -34,25 +38,27 @@ int32_t ServletDispatch::handle(sylar::http::HttpRequest::ptr request,
 }
 
 void ServletDispatch::addServlet(const std::string &uri, Servlet::ptr servlet) {
-  RWMutexTYpe::WriteLock lock(m_mutex);
+  RWMutexType::WriteLock lock(m_mutex);
   m_datas[uri] = servlet;
 }
 void ServletDispatch::addServlet(const std::string &uri,
                                  FunctionServlet::callback cb) {
-  RWMutexTYpe::WriteLock lock(m_mutex);
+  RWMutexType::WriteLock lock(m_mutex);
   m_datas[uri].reset(new FunctionServlet(cb));
 }
 void ServletDispatch::addGlobServlet(const std::string &uri,
                                      Servlet::ptr servlet) {
-  RWMutexTYpe::WriteLock lock(m_mutex);
+  RWMutexType::WriteLock lock(m_mutex);
   for (auto it = m_globs.begin(); it != m_globs.end(); ++it) {
     if (it->first == uri) {
       m_globs.erase(it);
       break;
     }
+    // m_globs.push_back(std::make_pair(uri, it->second));
   }
-  //  m_globs.push_back(std::make_pair(uri
-  //             , std::make_shared<HoldServletCreator>(slt)));
+
+  // m_globs.push_back(
+  //     std::make_pair(uri, std::make_shared<HoldServletCreator>(slt)));
 }
 void ServletDispatch::addGlobServlet(const std::string &uri,
                                      FunctionServlet::callback cb) {
@@ -60,11 +66,11 @@ void ServletDispatch::addGlobServlet(const std::string &uri,
 }
 
 void ServletDispatch::delServlet(const std::string &uri) {
-  RWMutexTYpe::WriteLock lock(m_mutex);
+  RWMutexType::WriteLock lock(m_mutex);
   m_datas.erase(uri);
 }
 void ServletDispatch::delGlobServlet(const std::string &uri) {
-  RWMutexTYpe::WriteLock lock(m_mutex);
+  RWMutexType::WriteLock lock(m_mutex);
   for (auto it = m_globs.begin(); it != m_globs.end(); ++it) {
     if (it->first == uri) {
       m_globs.erase(it);
@@ -74,12 +80,12 @@ void ServletDispatch::delGlobServlet(const std::string &uri) {
 }
 
 Servlet::ptr ServletDispatch::getSetvlet(const std::string &uri) {
-  RWMutexTYpe::ReadLock lock(m_mutex);
+  RWMutexType::ReadLock lock(m_mutex);
   auto it = m_datas.find(uri);
   return it == m_datas.end() ? nullptr : it->second;
 }
 Servlet::ptr ServletDispatch::getGlobSetvlet(const std::string &uri) {
-  RWMutexTYpe::ReadLock lock(m_mutex);
+  RWMutexType::ReadLock lock(m_mutex);
   for (auto it = m_globs.begin(); it != m_globs.end(); ++it) {
     if (it->first == uri) {
       return it->second;
@@ -88,7 +94,7 @@ Servlet::ptr ServletDispatch::getGlobSetvlet(const std::string &uri) {
   return nullptr;
 }
 Servlet::ptr ServletDispatch::getMatchServlet(const std::string &uri) {
-  RWMutexTYpe::ReadLock lock(m_mutex);
+  RWMutexType::ReadLock lock(m_mutex);
   auto mit = m_datas.find(uri);
   if (mit != m_datas.end()) {
     return mit->second;
@@ -101,6 +107,7 @@ Servlet::ptr ServletDispatch::getMatchServlet(const std::string &uri) {
   }
   return m_default;
 }
+
 NotFoundServlet::NotFoundServlet(const std::string &name)
     : Servlet("NotFoundServlet"), m_name(name) {
   m_content =
@@ -114,8 +121,8 @@ int32_t NotFoundServlet::handle(sylar::http::HttpRequest::ptr request,
                                 sylar::http::HttpResponse::ptr response,
                                 sylar::http::HttpSession::ptr session) {
   response->setStatus(sylar::http::HttpStatus::NOT_FOUND);
-  response->setHeaders("Server", "sylar/1.0.0");
-  response->setHeaders("Content-Type", "text/html");
+  response->setHeader("Server", "sylar/1.0.0");
+  response->setHeader("Content-Type", "text/html");
   response->setBody(m_content);
   return 0;
 }

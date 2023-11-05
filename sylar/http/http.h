@@ -274,6 +274,7 @@ class HttpRequest {
   std::ostream &dump(std::ostream &os) const;
 
   std::string toString() const;
+  void init();
 
  private:
  private:
@@ -313,9 +314,10 @@ class HttpResponse {
   bool isClose() const { return m_close; }
   void setClose(bool v) { m_close = v; }
 
-  std::string getHeaders(std::string &key, const std::string &def = "") const;
-  void setHeaders(const std::string &key, const std::string &val);
-  void delHeaders(std::string &key);
+  std::string getHeader(const std::string &key,
+                        const std::string &def = "") const;
+  void setHeader(const std::string &key, const std::string &val);
+  void delHeader(std::string &key);
 
   template <typename T>
   bool checkGetHeaderAs(const std::string &key, T &val, const T &def = T()) {

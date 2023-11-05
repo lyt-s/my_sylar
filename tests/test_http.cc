@@ -12,7 +12,7 @@ void test() {
 
 void test_response() {
   sylar::http::HttpResponse::ptr rsp(new sylar::http::HttpResponse);
-  rsp->setHeaders("X-X", "sylar");
+  rsp->setHeader("X-X", "sylar");
   rsp->setBody("hello sylar");
   rsp->setClose(false);
   rsp->setStatus((sylar::http::HttpStatus)(400));

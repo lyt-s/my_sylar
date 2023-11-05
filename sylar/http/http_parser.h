@@ -8,10 +8,10 @@
 namespace sylar {
 namespace http {
 
-class HttpRequestParse {
+class HttpRequestParser {
  public:
-  typedef std::shared_ptr<HttpRequestParse> ptr;
-  HttpRequestParse();
+  typedef std::shared_ptr<HttpRequestParser> ptr;
+  HttpRequestParser();
 
   size_t execute(char *data, size_t len);
   int isFinished() const;
@@ -40,17 +40,25 @@ class HttpResponseParser {
   typedef std::shared_ptr<HttpResponseParser> ptr;
   HttpResponseParser();
 
-  size_t execute(char *data, size_t len);
+  /**
+   * @brief 解析HTTP响应协议
+   * @param[in, out] data 协议数据内存
+   * @param[in] len 协议数据内存大小
+   * @param[in] chunck 是否在解析chunck
+   * @return 返回实际解析的长度,并且移除已解析的数据
+   */
+  size_t execute(char *data, size_t len, bool chunck);
   int isFinished() const;
   int hasError() const;
 
   HttpResponse::ptr getData() const { return m_data; }
+  const httpclient_parser getParser() const { return m_parser; }
   void setError(const int v) { m_error = v; }
 
   uint64_t getContentLength();
 
  public:
-  static uint64_t GetHttpResponsetBufferSize();
+  static uint64_t GetHttpResponseBufferSize();
   static uint64_t GetHttpResponseMaxBodySize();
 
  private:

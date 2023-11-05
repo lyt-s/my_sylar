@@ -13,6 +13,7 @@
 #include "sylar/socket.h"
 #include "sylar/stream.h"
 #include "sylar/tcp_server.h"
+#include "sylar/uri.h"
 
 static sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
 
