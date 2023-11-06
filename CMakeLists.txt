@@ -54,13 +54,8 @@ target_link_libraries(sylar PUBLIC
 # set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 #lib
-add_subdirectory(sylar)
+# add_subdirectory(sylar)
 # test
 add_subdirectory(tests)
-<<<<<<< HEAD
 add_subdirectory(examples)
 add_subdirectory(samples)
-=======
-# examples
-add_subdirectory(examples)
->>>>>>> dev_temp
