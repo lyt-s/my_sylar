@@ -52,6 +52,7 @@ void HttpServer::handleClient(Socket::ptr client) {
     session->sendResponse(rsp);
 
     if (!m_isKeepalive || req->isClose()) {
+      SYLAR_LOG_DEBUG(g_logger) << "m_isKeepalive= " << m_isKeepalive;
       break;
     }
   } while (m_isKeepalive);

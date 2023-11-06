@@ -54,11 +54,9 @@ void ServletDispatch::addGlobServlet(const std::string &uri,
       m_globs.erase(it);
       break;
     }
-    // m_globs.push_back(std::make_pair(uri, it->second));
   }
 
-  // m_globs.push_back(
-  //     std::make_pair(uri, std::make_shared<HoldServletCreator>(slt)));
+  m_globs.push_back(std::make_pair(uri, servlet));
 }
 void ServletDispatch::addGlobServlet(const std::string &uri,
                                      FunctionServlet::callback cb) {
