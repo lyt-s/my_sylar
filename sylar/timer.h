@@ -138,7 +138,7 @@ class TimerManager {
   /// 是否触发onTimerInsertedAtFront
   bool m_tickled = false;
   /// 上次执行时间
-  uint64_t m_previousTime = 0;
+  uint64_t m_previouseTime = 0;
 };
 
 }  // namespace sylar

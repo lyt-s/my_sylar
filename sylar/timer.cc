@@ -100,7 +100,7 @@ bool Timer::reset(uint64_t ms, bool from_now) {
   return true;
 }
 
-TimerManager::TimerManager() { m_previousTime = sylar::GetCurrentMS(); }
+TimerManager::TimerManager() { m_previouseTime = sylar::GetCurrentMS(); }
 TimerManager::~TimerManager() {}
 
 Timer::ptr TimerManager::addTimer(uint64_t ms, std::function<void()> cb,
@@ -212,11 +212,11 @@ void TimerManager::addTimer(Timer::ptr timer, RWMutexType::WriteLock &lock) {
 bool TimerManager::detextClockRollover(uint64_t now_ms) {
   bool rollover = false;
   // 现在的时间比上次执行的时间还小，并且比上次执行的时间的一小时之前还小，有问题，会出现吗？？？
-  if (now_ms < m_previousTime && now_ms < (m_previousTime - 60 * 60 * 1000)) {
+  if (now_ms < m_previouseTime && now_ms < (m_previouseTime - 60 * 60 * 1000)) {
     rollover = true;
   }
   // 重置 上次执行的时间
-  m_previousTime = now_ms;
+  m_previouseTime = now_ms;
   return rollover;
 }
 
