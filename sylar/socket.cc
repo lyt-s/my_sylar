@@ -63,7 +63,12 @@ Socket::ptr Socket::CreateUnixUDPSocket() {
 }
 
 Socket::Socket(int family, int type, int prorocol)
-    : m_sock(-1), m_family(family), m_type(type), m_protocol(prorocol), m_isConnected(false) {}
+    : m_sock(-1),
+      m_family(family),
+      m_type(type),
+      m_protocol(prorocol),
+      m_isConnected(false) {}
+
 Socket::~Socket() { close(); }
 
 int64_t Socket::getSendTimeout() {
@@ -97,19 +102,22 @@ void Socket::setRecvTimeout(int64_t v) {
 bool Socket::getOption(int level, int option, void *result, socklen_t *len) {
   int rt = getsockopt(m_sock, level, option, result, (socklen_t *)len);
   if (rt) {
-    SYLAR_LOG_DEBUG(g_logger) << "getOption sock=" << m_sock << "level=" << level
-                              << "option=" << option << "errno=" << errno << "errstr"
-                              << strerror(errno);
+    SYLAR_LOG_DEBUG(g_logger)
+        << "getOption sock=" << m_sock << "level=" << level
+        << "option=" << option << "errno=" << errno << "errstr"
+        << strerror(errno);
     return false;
   }
   return true;
 }
 
-bool Socket::setOption(int level, int option, const void *result, socklen_t len) {
+bool Socket::setOption(int level, int option, const void *result,
+                       socklen_t len) {
   if (setsockopt(m_sock, level, option, result, (socklen_t)len)) {
-    SYLAR_LOG_DEBUG(g_logger) << "setOption sock=" << m_sock << "level=" << level
-                              << "option=" << option << "errno=" << errno << "errstr"
-                              << strerror(errno);
+    SYLAR_LOG_DEBUG(g_logger)
+        << "setOption sock=" << m_sock << " level=" << level
+        << " option=" << option << " errno=" << errno
+        << " errstr=" << strerror(errno);
     return false;
   }
   return true;
@@ -147,19 +155,21 @@ bool Socket::init(int sock) {
 bool Socket::bind(const Address::ptr addr) {
   if (!isVaild()) {
     newSock();
-    if (SYLAR_UNLICKLY(!isVaild())) {
+    if (SYLAR_UNLIKELY(!isVaild())) {
       return false;
     }
   }
 
-  if (SYLAR_UNLICKLY(addr->getFamily()) != m_family) {
-    SYLAR_LOG_ERROR(g_logger) << "bind sock.family(" << m_family << ") addr.family("
-                              << addr->getFamily() << ") not equal, addr=" << addr->toString();
+  if (SYLAR_UNLIKELY(addr->getFamily() != m_family)) {
+    SYLAR_LOG_ERROR(g_logger)
+        << "bind sock.family(" << m_family << ") addr.family("
+        << addr->getFamily() << ") not equal, addr=" << addr->toString();
     return false;
   }
 
   if (::bind(m_sock, addr->getAddr(), addr->getAddrLen())) {
-    SYLAR_LOG_ERROR(g_logger) << "bind error errno=" << errno << "errstr=" << strerror(errno);
+    SYLAR_LOG_ERROR(g_logger)
+        << "bind error errno=" << errno << " errstr=" << strerror(errno);
     return false;
   }
   getLocalAddress();
@@ -168,30 +178,34 @@ bool Socket::bind(const Address::ptr addr) {
 bool Socket::connect(const Address::ptr addr, uint64_t timeout_ms) {
   if (!isVaild()) {
     newSock();
-    if (SYLAR_UNLICKLY(!isVaild())) {
+    if (SYLAR_UNLIKELY(!isVaild())) {
       return false;
     }
   }
   SYLAR_LOG_DEBUG(g_logger) << "debug addr->getFamily= " << addr->getFamily();
   SYLAR_LOG_DEBUG(g_logger) << "debug m_family= " << m_family;
   // 括号写错位置了
-  if (SYLAR_UNLICKLY(addr->getFamily() != m_family)) {
-    SYLAR_LOG_ERROR(g_logger) << "connect sock.family(" << m_family << ") addr.family("
-                              << addr->getFamily() << ") not equal, addr=" << addr->toString();
+  if (SYLAR_UNLIKELY(addr->getFamily() != m_family)) {
+    SYLAR_LOG_ERROR(g_logger)
+        << "connect sock.family(" << m_family << ") addr.family("
+        << addr->getFamily() << ") not equal, addr=" << addr->toString();
     return false;
   }
 
   if (timeout_ms == (uint64_t)-1) {
     if (::connect(m_sock, addr->getAddr(), addr->getAddrLen())) {
-      SYLAR_LOG_ERROR(g_logger) << "sock=" << m_sock << " connect(" << addr->toString()
-                                << ") error errno=" << errno << " errstr=" << strerror(errno);
+      SYLAR_LOG_ERROR(g_logger)
+          << "sock=" << m_sock << " connect(" << addr->toString()
+          << ") error errno=" << errno << " errstr=" << strerror(errno);
       return false;
     }
   } else {
-    if (::connect_with_timeout(m_sock, addr->getAddr(), addr->getAddrLen(), timeout_ms)) {
-      SYLAR_LOG_ERROR(g_logger) << "sock=" << m_sock << " connect(" << addr->toString()
-                                << ") timeout= " << timeout_ms << " error errno=" << errno
-                                << " errstr=" << strerror(errno);
+    if (::connect_with_timeout(m_sock, addr->getAddr(), addr->getAddrLen(),
+                               timeout_ms)) {
+      SYLAR_LOG_ERROR(g_logger)
+          << "sock=" << m_sock << " connect(" << addr->toString()
+          << ") timeout= " << timeout_ms << " error errno=" << errno
+          << " errstr=" << strerror(errno);
       close();
       return false;
     }
@@ -202,12 +216,13 @@ bool Socket::connect(const Address::ptr addr, uint64_t timeout_ms) {
   return true;
 }
 bool Socket::listen(int backlog) {
-  if (isVaild()) {
+  if (!isVaild()) {
     SYLAR_LOG_ERROR(g_logger) << "listen error sock=-1";
     return false;
   }
   if (::listen(m_sock, backlog)) {
-    SYLAR_LOG_ERROR(g_logger) << "listen error errno=" << errno << strerror(errno);
+    SYLAR_LOG_ERROR(g_logger)
+        << "listen error errno=" << errno << strerror(errno);
     return false;
   }
   return true;
@@ -243,19 +258,23 @@ int Socket::send(const iovec *buffers, size_t length, int flags) {
   }
   return -1;
 }
-int Socket::sendTo(const void *buffer, size_t length, const Address::ptr to, int flags) {
+int Socket::sendTo(const void *buffer, size_t length, const Address::ptr to,
+                   int flags) {
   if (isConnected()) {
-    return ::sendto(m_sock, buffer, length, flags, to->getAddr(), to->getAddrLen());
+    return ::sendto(m_sock, buffer, length, flags, to->getAddr(),
+                    to->getAddrLen());
   }
   return -1;
 }
-int Socket::sendTo(const iovec *buffers, size_t length, const Address::ptr to, int flags) {
+int Socket::sendTo(const iovec *buffers, size_t length, const Address::ptr to,
+                   int flags) {
   if (isConnected()) {
     msghdr msg;
     memset(&msg, 0, sizeof(msg));
     msg.msg_iov = (iovec *)buffers;
     msg.msg_iovlen = length;
-    // Assigning to 'void *' from 'const sockaddr *' discards  -todo- -直接const 转为非const
+    // Assigning to 'void *' from 'const sockaddr *' discards  -todo- -直接const
+    // 转为非const
     msg.msg_name = to->getAddr();
     msg.msg_namelen = to->getAddrLen();
     return ::sendmsg(m_sock, &msg, flags);
@@ -279,14 +298,16 @@ int Socket::recv(iovec *buffers, size_t length, int flags) {
   }
   return -1;
 }
-int Socket::recvFrom(void *buffer, size_t length, Address::ptr from, int flags) {
+int Socket::recvFrom(void *buffer, size_t length, Address::ptr from,
+                     int flags) {
   if (isConnected()) {
     socklen_t len = from->getAddrLen();
     return ::recvfrom(m_sock, buffer, length, flags, from->getAddr(), &len);
   }
   return -1;
 }
-int Socket::recvFrom(iovec *buffers, size_t length, Address::ptr from, int flags) {
+int Socket::recvFrom(iovec *buffers, size_t length, Address::ptr from,
+                     int flags) {
   if (isConnected()) {
     msghdr msg;
     memset(&msg, 0, sizeof(msg));
@@ -323,10 +344,12 @@ Address::ptr Socket::getRemoteAddress() {
 
   socklen_t addrlen = result->getAddrLen();
   if (getpeername(m_sock, result->getAddr(), &addrlen)) {
-    SYLAR_LOG_ERROR(g_logger) << "getpeername error sock=" << m_sock
-                              << "getpeername error errno=" << errno << strerror(errno);
+    SYLAR_LOG_ERROR(g_logger)
+        << "getpeername error sock=" << m_sock
+        << "getpeername error errno=" << errno << strerror(errno);
     // return Address::ptr(new UnknownAddress(m_family));
-    return std::dynamic_pointer_cast<Address>(std::make_shared<UnknownAddress>(m_family));
+    return std::dynamic_pointer_cast<Address>(
+        std::make_shared<UnknownAddress>(m_family));
   }
 
   if (m_family == AF_UNIX) {
@@ -360,10 +383,12 @@ Address::ptr Socket::getLocalAddress() {
 
   socklen_t addrlen = result->getAddrLen();
   if (getsockname(m_sock, result->getAddr(), &addrlen)) {
-    SYLAR_LOG_ERROR(g_logger) << "getsockname error sock=" << m_sock
-                              << "getsockname error errno=" << errno << strerror(errno);
+    SYLAR_LOG_ERROR(g_logger)
+        << "getsockname error sock=" << m_sock
+        << "getsockname error errno=" << errno << strerror(errno);
     // return Address::ptr(new UnknownAddress(m_family));
-    return std::dynamic_pointer_cast<Address>(std::make_shared<UnknownAddress>(m_family));
+    return std::dynamic_pointer_cast<Address>(
+        std::make_shared<UnknownAddress>(m_family));
   }
 
   if (m_family == AF_UNIX) {
@@ -386,8 +411,9 @@ int Socket::getError() {
 }
 
 std::ostream &Socket::dump(std::ostream &os) const {
-  os << "[socket sock=" << m_sock << "is_connected=" << m_isConnected << " family=" << m_family
-     << " type=" << m_type << "protocol=" << m_protocol;
+  os << "[socket sock=" << m_sock << "is_connected=" << m_isConnected
+     << " family=" << m_family << " type=" << m_type
+     << "protocol=" << m_protocol;
   if (m_localAddress) {
     os << " local_address=" << m_localAddress->toString();
   }
@@ -420,12 +446,18 @@ void Socket::initSock() {
 
 void Socket::newSock() {
   m_sock = socket(m_family, m_type, m_protocol);
-  if (SYLAR_LICKLY(m_sock != -1)) {
+  if (SYLAR_LIKELY(m_sock != -1)) {
     initSock();
   } else {
-    SYLAR_LOG_ERROR(g_logger) << "socket(" << m_family << ", " << m_type << ", " << m_protocol
-                              << ") errno=" << errno << "errstr=" << strerror(errno);
+    SYLAR_LOG_ERROR(g_logger)
+        << "socket(" << m_family << ", " << m_type << ", " << m_protocol
+        << ") errno=" << errno << "errstr=" << strerror(errno);
   }
+}
+
+// todo
+std::ostream &operator<<(std::ostream &os, const Socket &sock) {
+  return sock.dump(os);
 }
 
 }  // namespace sylar

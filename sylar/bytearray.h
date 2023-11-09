@@ -114,8 +114,10 @@ class ByteArray {
   std::string toHexString() const;
 
   // 只获取内容 不修改 position
-  uint64_t getReadBuffers(std::vector<iovec> &buffers, uint64_t len = ~0ull) const;
-  uint64_t getReadBuffers(std::vector<iovec> &buffers, uint64_t len, uint64_t position) const;
+  uint64_t getReadBuffers(std::vector<iovec> &buffers,
+                          uint64_t len = ~0ull) const;
+  uint64_t getReadBuffers(std::vector<iovec> &buffers, uint64_t len,
+                          uint64_t position) const;
   // 增加容量不修改 position
   uint64_t getWriteBuffers(std::vector<iovec> &buffers, uint64_t len);
   size_t getSize() { return m_size; }

@@ -155,21 +155,31 @@ std::ostream &HttpRequest::dump(std::ostream &os) const {
   }
   return os;
 }
+void HttpRequest::init() {
+  std::string conn = getHeader("connection");
+  if (!conn.empty()) {
+    if (strcasecmp(conn.c_str(), "keep-alive") == 0) {
+      m_close = false;
+    } else {
+      m_close = true;
+    }
+  }
+}
 
 HttpResponse::HttpResponse(uint8_t version, bool close)
     : m_status(HttpStatus::OK), m_version(version), m_close(close) {}
 
-std::string HttpResponse::getHeaders(std::string &key,
-                                     const std::string &def) const {
+std::string HttpResponse::getHeader(const std::string &key,
+                                    const std::string &def) const {
   auto it = m_headers.find(key);
   return it == m_headers.end() ? def : it->second;
 }
 
-void HttpResponse::setHeaders(const std::string &key, const std::string &val) {
+void HttpResponse::setHeader(const std::string &key, const std::string &val) {
   m_headers[key] = val;
 }
 
-void HttpResponse::delHeaders(std::string &key) { m_headers.erase(key); }
+void HttpResponse::delHeader(std::string &key) { m_headers.erase(key); }
 
 std::string HttpResponse::toString() const {
   std::stringstream ss;
@@ -192,11 +202,19 @@ std::ostream &HttpResponse::dump(std::ostream &os) const {
 
   if (!m_body.empty()) {
     os << "content-length: " << m_body.size() << "\r\n\r\n";
+    os << m_body;
 
   } else {
     os << "\r\n";
   }
   return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const HttpRequest &req) {
+  return req.dump(os);
+}
+std::ostream &operator<<(std::ostream &os, const HttpResponse &rsp) {
+  return rsp.dump(os);
 }
 
 }  // namespace http

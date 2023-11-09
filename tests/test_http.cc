@@ -1,7 +1,7 @@
 #include <iostream>
 #include "sylar/http/http.h"
 #include "sylar/http/http_parser.h"
-
+#include "sylar/stream.h"
 void test() {
   sylar::http::HttpRequest::ptr req(new sylar::http::HttpRequest);
   req->setHeader("host", "www.sylar.top");
@@ -12,7 +12,7 @@ void test() {
 
 void test_response() {
   sylar::http::HttpResponse::ptr rsp(new sylar::http::HttpResponse);
-  rsp->setHeaders("X-X", "sylar");
+  rsp->setHeader("X-X", "sylar");
   rsp->setBody("hello sylar");
   rsp->setClose(false);
   rsp->setStatus((sylar::http::HttpStatus)(400));
