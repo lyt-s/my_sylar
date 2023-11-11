@@ -189,5 +189,15 @@ target_include_directories(test_env PRIVATE  ${CMAKE_SOURCE_DIR}
             
 
 target_link_libraries(test_env PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+#--------------------------------------------------------------------------------
+add_executable(test_application test_application.cc)
+
+target_include_directories(test_application PRIVATE  ${CMAKE_SOURCE_DIR}
+                                                ${yaml-cpp_INCLUDE_DIRS} 
+                                                ${Boost_INCLUDE_DIRS})
+
+            
+
+target_link_libraries(test_application PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
 # 可执行文件输出位置
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/tests)
