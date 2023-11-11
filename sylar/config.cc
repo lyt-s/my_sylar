@@ -6,15 +6,26 @@
  * @Description:
  */
 #include "config.h"
+#include <sys/stat.h>
 
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
 #include <list>
+#include <map>
 #include <sstream>
 #include <string>
 #include <utility>
+#include <vector>
+#include "env.h"
 #include "log.h"
+#include "thread.h"
+#include "util.h"
+#include "yaml-cpp/node/node.h"
+#include "yaml-cpp/node/parse.h"
 namespace sylar {
+
+static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
 ConfigVarBase::ptr Config::LookupBase(const std::string &name) {
   RWMutexType::ReadLock lock(GetMutex());
@@ -34,7 +45,7 @@ static void ListAllMember(
     std::list<std::pair<std::string, const YAML::Node>> &output) {
   if (prefix.find_first_not_of("abcdefghijklmnopqrstuvwxyz._12345678") !=
       std::string::npos) {
-    SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
+    SYLAR_LOG_ERROR(g_logger)
         << "config invalid name: " << prefix << " : " << node;
     return;
   }
@@ -74,6 +85,38 @@ void Config::LoadFromYaml(const YAML::Node &root) {
         ss << i.second;
         var->fromString(ss.str());
       }
+    }
+  }
+}
+
+static std::map<std::string, uint64_t> s_file2modifytime;
+static sylar::Mutex s_mutex;
+
+void Config::LoadFromConfDir(const std::string &path, bool force) {
+  std::string absoulate_path =
+      sylar::EnvMgr::GetInstance()->getAbsolutePath(path);
+  std::vector<std::string> files;
+  FSUtil::ListAllFile(files, absoulate_path, ".yml");
+
+  for (auto &i : files) {
+    // todo  // 实现了 防止重复加载
+    // 这里只会检查根据文件的更改时间，来更新，不会检测实际上内容更新了没有
+    {
+      struct stat st;
+      lstat(i.c_str(), &st);
+      sylar::Mutex::Lock lock(s_mutex);
+      if (s_file2modifytime[i] == (uint64_t)st.st_mtime) {
+        continue;
+      }
+      s_file2modifytime[i] = st.st_mtime;
+    }
+
+    try {
+      YAML::Node root = YAML::LoadFile(i);
+      LoadFromYaml(root);
+      SYLAR_LOG_INFO(g_logger) << "LoadConfFile file=" << i << " ok";
+    } catch (...) {
+      SYLAR_LOG_ERROR(g_logger) << "LoadConfFile file=" << i << " failed";
     }
   }
 }
