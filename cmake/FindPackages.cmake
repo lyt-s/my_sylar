@@ -18,5 +18,13 @@ set(yaml-cpp_INCLUDE_DIRS ${THIRD_PARTY_DIR}/yaml-cpp/include)
 list(APPEND CMAKE_PREFIX_PATH ${THIRD_PARTY_DIR}/zlib)
 # find_package(zlib REQUIRED)  大小写问题？？
 find_package(ZLIB REQUIRED) # COMPONENTS ALLs
-message(STATUS "Find zlib in ${Zlib_DIR}")
-message(STATUS "zlib version: ${Zlib_VERSION}")
+message(STATUS "Find zlib in ${zlib_DIR}")
+message(STATUS "zlib version: ${zlib_VERSION}")
+set(zlib_INCLUDE_DIRS  ${THIRD_PARTY_DIR}/zlib/include)
+
+#jsoncpp
+list(APPEND CMAKE_PREFIX_PATH ${THIRD_PARTY_DIR}/json-cpp)
+find_package(jsoncpp REQUIRED) # COMPONENTS ALLs
+message(STATUS "Find jsoncpp in ${jsoncpp_DIR}")
+message(STATUS "jsoncpp  version: ${jsoncpp_VERSION}")
+set(json-cpp_INCLUDE_DIRS ${THIRD_PARTY_DIR}/json-cpp/include)

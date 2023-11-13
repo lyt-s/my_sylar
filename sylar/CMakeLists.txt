@@ -2,21 +2,21 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 file(GLOB_RECURSE LIB_SRC ./*.cc)
 
-
-
-
-
 add_library(sylar SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(sylar) #__FILE__
 
 target_include_directories(sylar    PUBLIC   
                                     ${CMAKE_SOURCE_DIR}/sylar
                                     ${yaml-cpp_INCLUDE_DIRS} 
-                                    ${Boost_INCLUDE_DIRS})
+                                    ${Boost_INCLUDE_DIRS}
+                                    ${json-cpp_INCLUDE_DIRS}
+                                    ${zlib_INCLUDE_DIRS}
+                                    )
 
 target_link_libraries(sylar PUBLIC 
                                     dl # todo  dslym
                                     pthread
+                                    jsoncpp
                                     ${Boost_LIBRARIES}
                                     ${ZLIB_LIBRARIES}
                                     ${yaml-cpp_LIBRARIES})
