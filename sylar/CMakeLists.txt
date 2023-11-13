@@ -18,6 +18,7 @@ target_link_libraries(sylar PUBLIC
                                     dl # todo  dslym
                                     pthread
                                     ${Boost_LIBRARIES}
+                                    ${ZLIB_LIBRARIES}
                                     ${yaml-cpp_LIBRARIES})
 
 # add_library(sylar_static STATIC ${LIB_SRC})

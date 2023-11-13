@@ -10,7 +10,7 @@
 #define __SYLAR_HTTP_CONNECTION_H__
 
 #include "http.h"
-#include "socket_stream.h"
+#include "streams/socket_stream.h"
 #include "thread.h"
 #include "uri.h"
 

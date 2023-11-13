@@ -14,3 +14,9 @@ message(STATUS "yaml-cpp version: ${yaml-cpp_VERSION}")
 set(yaml-cpp_LIBRARIES ${THIRD_PARTY_DIR}/yaml-cpp/lib/libyaml-cpp.a)
 set(yaml-cpp_INCLUDE_DIRS ${THIRD_PARTY_DIR}/yaml-cpp/include)
 
+# zlib
+list(APPEND CMAKE_PREFIX_PATH ${THIRD_PARTY_DIR}/zlib)
+# find_package(zlib REQUIRED)  大小写问题？？
+find_package(ZLIB REQUIRED) # COMPONENTS ALLs
+message(STATUS "Find zlib in ${Zlib_DIR}")
+message(STATUS "zlib version: ${Zlib_VERSION}")
