@@ -1,11 +1,5 @@
 #ifndef SYLAR_CONFIG_H_
 #define SYLAR_CONFIG_H_
-#include "log.h"
-#include "thread.h"
-#include "util.h"
-#include "yaml-cpp/node/node.h"
-#include "yaml-cpp/node/parse.h"
-
 #include <sys/types.h>
 #include <yaml-cpp/yaml.h>
 #include <boost/lexical_cast.hpp>
@@ -23,6 +17,12 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+#include "sylar/log.h"
+#include "sylar/thread.h"
+#include "sylar/util.h"
+#include "yaml-cpp/node/node.h"
+#include "yaml-cpp/node/parse.h"
 
 namespace sylar {
 

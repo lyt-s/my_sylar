@@ -1,6 +1,6 @@
 
 #line 1 "/home/lyt/my_sylar/sylar/uri.rl"
-#include "uri.h"
+#include "sylar/uri.h"
 #include <sstream>
 
 namespace sylar {

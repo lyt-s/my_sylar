@@ -86,12 +86,12 @@ if [ ! -d "$THIRD_PARTY_DIR/json-cpp" ]; then
     fi
 fi
 
-
 # Install protobuf
+# wget 下载不下来，是因为URL过长,此包可能出现问题，建议手动下载
 if [ ! -d "$THIRD_PARTY_DIR/protobuf" ]; then
     rm -rf protobuf-all-21.1.tar.gz protobuf-3.21.1
-    wget http://github.com/protocolbuffers/protobuf/releases/download/v21.1/protobuf-all-21.1.tar.gz
-    tar -zxvf protobuf-all-21.1.tar.gz
+    wget -O protobuf-all-21.1.tar.gz https://github.com/protocolbuffers/protobuf/releases/download/v21.1/protobuf-all-21.1.tar.gz
+    tar -xvf protobuf-all-21.1.tar.gz
     cd protobuf-3.21.1
     cmake -G Ninja -S . -B ./build -DCMAKE_INSTALL_PREFIX=$THIRD_PARTY_DIR/protobuf || RET=$?
     cmake --build ./build || RET=$?

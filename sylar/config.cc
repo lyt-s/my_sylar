@@ -5,7 +5,7 @@
  * @FilePath: /my_sylar/sylar/config.cc
  * @Description:
  */
-#include "config.h"
+#include "sylar/config.h"
 #include <sys/stat.h>
 
 #include <algorithm>
@@ -17,10 +17,10 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "env.h"
-#include "log.h"
-#include "thread.h"
-#include "util.h"
+#include "sylar/env.h"
+#include "sylar/log.h"
+#include "sylar/thread.h"
+#include "sylar/util.h"
 #include "yaml-cpp/node/node.h"
 #include "yaml-cpp/node/parse.h"
 namespace sylar {

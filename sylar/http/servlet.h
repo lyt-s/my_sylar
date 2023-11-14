@@ -15,9 +15,9 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include "http/http.h"
-#include "http/http_session.h"
-#include "thread.h"
+#include "sylar/http/http.h"
+#include "sylar/http/http_session.h"
+#include "sylar/thread.h"
 namespace sylar {
 namespace http {
 

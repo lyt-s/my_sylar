@@ -1,4 +1,4 @@
-#include "env.h"
+#include "sylar/env.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <cstdio>
@@ -6,8 +6,8 @@
 #include <iomanip>
 #include <iostream>
 #include <utility>
-#include "log.h"
-#include "thread.h"
+#include "sylar/log.h"
+#include "sylar/thread.h"
 
 namespace sylar {
 
@@ -17,7 +17,7 @@ static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 bool Env::init(int argc, char **argv) {
   char link[1024]{0};
   char path[1024]{0};
-  //放到link内
+  // 放到link内
   sprintf(link, "/proc/%d/exe", getpid());
   __attribute__((unused)) int result = readlink(link, path, sizeof(path));
   // path/xxx/exe

@@ -7,7 +7,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "stream.h"
+#include "sylar/stream.h"
 
 namespace sylar {
 

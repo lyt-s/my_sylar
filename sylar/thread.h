@@ -11,7 +11,7 @@
 #include <string>
 #include <thread>
 
-#include "noncopyable.h"
+#include "sylar/noncopyable.h"
 
 namespace sylar {
 
@@ -199,10 +199,13 @@ class CASLock : Noncopyable {
   CASLock() { m_mutex.clear(); }
   ~CASLock() {}
   void lock() {
-    while (std::atomic_flag_test_and_set_explicit(&m_mutex, std::memory_order_acquire)) {
+    while (std::atomic_flag_test_and_set_explicit(&m_mutex,
+                                                  std::memory_order_acquire)) {
     };
   }
-  void unlock() { std::atomic_flag_clear_explicit(&m_mutex, std::memory_order_release); }
+  void unlock() {
+    std::atomic_flag_clear_explicit(&m_mutex, std::memory_order_release);
+  }
 
  private:
   // todo 什么意思

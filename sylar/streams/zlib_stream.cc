@@ -1,5 +1,5 @@
-#include "macro.h"
-#include "zlib_stream.h"
+#include "sylar/streams/zlib_stream.h"
+#include "sylar/macro.h"
 
 namespace sylar {
 

@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include "iomanager.h"
-#include "singleton.h"
-#include "thread.h"
+#include "sylar/iomanager.h"
+#include "sylar/singleton.h"
+#include "sylar/thread.h"
 
 namespace sylar {
 

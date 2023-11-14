@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #include <cstdint>
 #include <functional>
-#include "singleton.h"
+#include "sylar/singleton.h"
 namespace sylar {
 
 struct ProcessInfo {

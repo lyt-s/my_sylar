@@ -1,9 +1,9 @@
 #ifndef SYLAR_APPLIACTION_H_
 #define SYLAR_APPLIACTION_H_
 #include <map>
-#include "http/http_server.h"
-#include "iomanager.h"
-#include "tcp_server.h"
+#include "sylar/http/http_server.h"
+#include "sylar/iomanager.h"
+#include "sylar/tcp_server.h"
 namespace sylar {
 class Application {
  public:

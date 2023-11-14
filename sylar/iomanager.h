@@ -9,11 +9,11 @@
 #include <string>
 #include <vector>
 
-#include "config.h"
-#include "fiber.h"
-#include "schedule.h"
-#include "thread.h"
-#include "timer.h"
+#include "sylar/config.h"
+#include "sylar/fiber.h"
+#include "sylar/schedule.h"
+#include "sylar/thread.h"
+#include "sylar/timer.h"
 
 namespace sylar {
 class IOManager final : public Scheduler, public TimerManager {
@@ -36,7 +36,8 @@ class IOManager final : public Scheduler, public TimerManager {
  private:
   /**
    * @brief Socket事件上下文类
-   * @details 每个socket fd都对应一个FdContext，包括fd的值，fd上的事件，以及fd的读写事件上下文
+   * @details 每个socket
+   * fd都对应一个FdContext，包括fd的值，fd上的事件，以及fd的读写事件上下文
    */
   struct FdContext {
     typedef Mutex MutexType;
@@ -85,7 +86,8 @@ class IOManager final : public Scheduler, public TimerManager {
    * @param[in] use_caller 是否将调用线程包含进去
    * @param[in] name 调度器的名称
    */
-  IOManager(size_t threads = 1, bool use_caller = true, const std::string &name = " ");
+  IOManager(size_t threads = 1, bool use_caller = true,
+            const std::string &name = " ");
   ~IOManager();
 
   int addEvent(int fd, Event event, std::function<void()> cb = nullptr);

@@ -5,8 +5,8 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "singleton.h"
-#include "thread.h"
+#include "sylar/singleton.h"
+#include "sylar/thread.h"
 namespace sylar {
 class Env {
  public:

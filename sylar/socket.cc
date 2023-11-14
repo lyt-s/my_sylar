@@ -135,7 +135,7 @@ Socket::ptr Socket::accept() {
 
 bool Socket::init(int sock) {
   FdCtx::ptr ctx = FdMgr::GetInstance()->get(sock);
-  if (ctx && ctx->isSocket() && !ctx->isClose()) {
+  if (ctx && ctx->isSocket() && !ctx->isClosed()) {
     m_sock = sock;
     m_isConnected = true;
     initSock();

@@ -5,7 +5,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # // todo o0 O3
 # set(CMAKE_C_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated-declarations")
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic  -O3  -fPIC -g -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic  -O3  -fPIC -g -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated-declarations")
 #-------------------------------------------------------------------------------
 
 # Find packages in the './third_party' directory
@@ -40,5 +40,5 @@ ragelmaker(sylar/http/httpclient_parser.rl LIB_SRC ${CMAKE_SOURCE_DIR}/sylar/htt
 add_subdirectory(sylar)
 # test
 add_subdirectory(tests)
-add_subdirectory(examples)
-add_subdirectory(samples)
+# add_subdirectory(examples)
+# add_subdirectory(samples)

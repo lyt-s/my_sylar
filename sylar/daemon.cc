@@ -1,4 +1,4 @@
-#include "daemon.h"
+#include "sylar/daemon.h"
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -9,9 +9,9 @@
 #include <ctime>
 #include <sstream>
 #include <string>
-#include "config.h"
-#include "log.h"
-#include "util.h"
+#include "sylar/config.h"
+#include "sylar/log.h"
+#include "sylar/util.h"
 
 namespace sylar {
 
@@ -62,7 +62,7 @@ static int real_daemon(int argc, char **argv,
         SYLAR_LOG_ERROR(g_logger)
             << "child crash pid=" << pid << " status=" << status;
       } else {
-        //正常退出
+        // 正常退出
         SYLAR_LOG_INFO(g_logger) << "child finished pid=" << pid;
         break;
       }
