@@ -1,5 +1,0 @@
-<map id="sylar::LogAppender" name="sylar::LogAppender">
-<area shape="rect" id="node1" title="日志输出目标" alt="" coords="5,360,152,555"/>
-<area shape="rect" id="node2" href="$classsylar_1_1Spinlock.html" title=" " alt="" coords="20,176,137,297"/>
-<area shape="rect" id="node3" href="$classsylar_1_1Noncopyable.html" title=" " alt="" coords="5,5,152,127"/>
-</map>

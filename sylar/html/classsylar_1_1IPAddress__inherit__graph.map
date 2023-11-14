@@ -1,6 +1,0 @@
-<map id="sylar::IPAddress" name="sylar::IPAddress">
-<area shape="rect" id="node1" title="IP地址的基类" alt="" coords="99,351,261,516"/>
-<area shape="rect" id="node3" href="$classsylar_1_1IPv4Address.html" title="IPv4地址" alt="" coords="5,571,168,810"/>
-<area shape="rect" id="node4" href="$classsylar_1_1IPv6Address.html" title="IPv6地址" alt="" coords="192,564,355,817"/>
-<area shape="rect" id="node2" href="$classsylar_1_1Address.html" title="网络地址的基类,抽象类" alt="" coords="83,5,277,303"/>
-</map>

@@ -1,4 +1,0 @@
-<map id="sylar::UnixAddress" name="sylar::UnixAddress">
-<area shape="rect" id="node1" title="UnixSocket地址" alt="" coords="31,351,175,531"/>
-<area shape="rect" id="node2" href="$classsylar_1_1Address.html" title="网络地址的基类,抽象类" alt="" coords="5,5,200,303"/>
-</map>

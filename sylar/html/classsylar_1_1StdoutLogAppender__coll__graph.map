@@ -1,6 +1,0 @@
-<map id="sylar::StdoutLogAppender" name="sylar::StdoutLogAppender">
-<area shape="rect" id="node1" title="输出到控制台的Appender" alt="" coords="5,604,195,696"/>
-<area shape="rect" id="node2" href="$classsylar_1_1LogAppender.html" title="日志输出目标" alt="" coords="27,360,173,555"/>
-<area shape="rect" id="node3" href="$classsylar_1_1Spinlock.html" title=" " alt="" coords="41,176,159,297"/>
-<area shape="rect" id="node4" href="$classsylar_1_1Noncopyable.html" title=" " alt="" coords="27,5,173,127"/>
-</map>
