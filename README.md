@@ -45,6 +45,6 @@ sudo apt install ragel
 
 ```cmake
 sudo bash ./script/install_thirdparty.sh
-cmake -G . -S ./build 
+cmake -G Ninja -S . -B build 
 cmake --build build
 ```
