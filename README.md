@@ -41,7 +41,7 @@ sudo apt install ragel
 
 只需要运行下面的脚本即可
 
-* Ubuntu 22.04  gcc11.4
+* Ubuntu 22.04  gcc 11.4
 
 ```cmake
 sudo bash ./script/install_thirdparty.sh
