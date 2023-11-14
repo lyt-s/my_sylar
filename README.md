@@ -23,3 +23,28 @@
 | 2023.11.11| 完成Application|
 
 > todo  chat_room
+
+## Building my_sylar
+
+### Install Dependencies
+
+``` bash
+sudo apt install build-essential wget bison  texinfo openssl net-tools doxygen 
+sudo apt install ragel
+```
+
+第三方库
+
+``` cpp
+ boost yaml-cpp protobuf Zlib redis json-cpp 
+```
+
+只需要运行下面的脚本即可
+
+* Ubuntu 22.04  gcc11.4
+
+```cmake
+sudo bash ./script/install_thirdparty.sh
+cmake -G . -S ./build 
+cmake --build build
+```
