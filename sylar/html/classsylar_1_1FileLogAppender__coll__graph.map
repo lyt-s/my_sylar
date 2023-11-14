@@ -1,0 +1,6 @@
+<map id="sylar::FileLogAppender" name="sylar::FileLogAppender">
+<area shape="rect" id="node1" title="输出到文件的Appender" alt="" coords="5,604,176,725"/>
+<area shape="rect" id="node2" href="$classsylar_1_1LogAppender.html" title="日志输出目标" alt="" coords="17,360,164,555"/>
+<area shape="rect" id="node3" href="$classsylar_1_1Spinlock.html" title=" " alt="" coords="32,176,149,297"/>
+<area shape="rect" id="node4" href="$classsylar_1_1Noncopyable.html" title=" " alt="" coords="17,5,164,127"/>
+</map>

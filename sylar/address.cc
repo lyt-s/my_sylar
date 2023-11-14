@@ -81,24 +81,39 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
   const char *service = NULL;
 
   // 检查 ipv6address service
+  // 以www.sylar.top:80为例子
+  // host[0] == w，跳过
   if (!host.empty() && host[0] == '[') {
     const char *endipv6 =
         (const char *)memchr(host.c_str() + 1, ']', host.size() - 1);
+    // 找到 ']'
     if (endipv6) {
       // todo check out of range
       if (*(endipv6 + 1) == ':') {
         service = endipv6 + 2;
       }
+      // 得到 80
       node = host.substr(1, endipv6 - host.c_str() - 1);
     }
   }
-  //检查 node serivce
+  // 检查 node serivce
+  // 为空，进入
   if (node.empty()) {
+    // 返回一个指针指向 ":" 的位置
     service = (const char *)memchr(host.c_str(), ':', host.size());
+    // 有':'则进行处理  service ":80"
     if (service) {
+      // 检查 ':' 字符之后是否还有其他的 ':' 字符。在这种情况下，"80"
+      // 中没有其他的 ':' 字符，所以条件成立，进入以下代码块 host.c_str() +
+      // host.size() - service - 1 == 2
       if (!memchr(service + 1, ':', host.c_str() + host.size() - service - 1)) {
+        // 这行代码将 node 的值设为从 host 字符串的开头到
+        // service - host.c_str() == 13
+        // 所指向的位置之间的子字符串。在这种情况下，node 的值为
+        // "www.sylar.top"。
         node = host.substr(0, service - host.c_str());
         ++service;
+        // service = 80
       }
     }
   }
@@ -106,7 +121,8 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
   if (node.empty()) {
     node = host;
   }
-
+  // todo
+  // http解析
   int error = getaddrinfo(node.c_str(), service, &hints, &results);
   if (error) {
     SYLAR_LOG_ERROR(g_logger)
@@ -269,9 +285,14 @@ IPAddress::ptr IPAddress::Create(const char *address, uint16_t port) {
   addrinfo hints, *results;
   memset(&hints, 0, sizeof(hints));
 
+  // AI_NUMERICHOST 标志用于指示 getaddrinfo
+  // 函数将主机名参数视为一个数值IP地址而不是一个主机名字符串。这对于需要直接使用IP地址而不是主机名的情况很有用。
+  // 当设置了 AI_NUMERICHOST 标志时，getaddrinfo
+  // 将不会尝试解析主机名，而是直接将主机名参数作为一个IP地址处理。
   hints.ai_flags = AI_NUMERICHOST;
+  // ​ai_family​​​设置成了​​AF_UNSPEC​​​，也就意味着我压根不在意我们用IPv4还是IPv6,解析过程中支持多种地址类型。
   hints.ai_family = AF_UNSPEC;
-
+  // ​getaddrinfo()​​​会在堆内存中创建​​results​指向的链表，使用完之后一定要使用​​freeaddrinfo()​​进行内存释放。
   int error = getaddrinfo(address, NULL, &hints, &results);
   if (error) {
     SYLAR_LOG_DEBUG(g_logger) << "IPAddress::Create(" << address << ", " << port
@@ -301,6 +322,7 @@ IPv4Address::ptr IPv4Address::Create(const char *address, uint16_t port) {
   // IPv4Address::ptr rt(new IPv4Address);
   IPv4Address::ptr rt = std::make_shared<IPv4Address>();
   rt->m_addr.sin_port = byteswapOnBigEndian(port);
+  // 将字符串形式的 IP 地址转换为二进制形式
   int result = inet_pton(AF_INET, address, &rt->m_addr.sin_addr);
   if (result <= 0) {
     SYLAR_LOG_ERROR(g_logger) << "IPv4Address::Create(" << address << ", "
@@ -325,11 +347,14 @@ sockaddr *IPv4Address::getAddr() { return (sockaddr *)&m_addr; }
 socklen_t IPv4Address::getAddrLen() const { return sizeof(m_addr); }
 
 std::ostream &IPv4Address::insert(std::ostream &os) const {
+  // todo
   uint32_t addr = byteswapOnBigEndian(m_addr.sin_addr.s_addr);
   // todo
+  // 将转换后的地址按照点分十进制形式输出到流中
   os << ((addr >> 24) & 0xff) << "." << ((addr >> 16) & 0xff) << "."
      << ((addr >> 8) & 0xff) << "." << (addr & 0xff);
 
+  // todo
   os << ": " << byteswapOnBigEndian(m_addr.sin_port);
   return os;
 }
@@ -345,6 +370,7 @@ IPAddress::ptr IPv4Address::broadcastAddress(uint32_t prefix_len) {
   // todo
   return std::make_shared<IPv4Address>(baddr);
 }
+
 IPAddress::ptr IPv4Address::networdAddress(uint32_t prefix_len) {
   if (prefix_len > 32) {
     return nullptr;

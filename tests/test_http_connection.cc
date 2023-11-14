@@ -49,7 +49,7 @@ void run() {
   // test_pool();
 }
 int main() {
-  sylar::IOManager iom(2);
+  sylar::IOManager iom(1);
   iom.schedule(run);
   return 0;
 }

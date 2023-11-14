@@ -1,0 +1,8 @@
+<map id="sylar::TcpServer" name="sylar::TcpServer">
+<area shape="rect" id="node1" title="TCP服务器封装" alt="" coords="209,800,364,1141"/>
+<area shape="rect" id="node2" title=" " alt="" coords="5,535,189,627"/>
+<area shape="rect" id="node3" href="$classsylar_1_1Noncopyable.html" title=" " alt="" coords="213,521,360,642"/>
+<area shape="rect" id="node4" href="$classsylar_1_1IOManager.html" title=" " alt="" coords="385,455,586,708"/>
+<area shape="rect" id="node5" href="$classsylar_1_1Scheduler.html" title="协程调度器" alt="" coords="289,5,469,405"/>
+<area shape="rect" id="node6" href="$classsylar_1_1TimerManager.html" title=" " alt="" coords="493,108,694,303"/>
+</map>
