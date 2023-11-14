@@ -23,3 +23,21 @@
 | 2023.11.11| 完成Application|
 
 > todo  chat_room
+
+## Building
+
+第三方库
+
+``` cpp
+ boost yaml-cpp 
+```
+
+只需要运行下面的脚本即可
+
+* Ubuntu 22.04  gcc11.4
+
+```cmake
+sudo bash ./script/install_thirdparty.sh
+cmake -G Ninja -S . -B build 
+cmake --build build
+```
