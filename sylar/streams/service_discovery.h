@@ -6,7 +6,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "sylar/iomanager.h"
-#include "sylar/mutex.h"
+// #include "sylar/mutex.h"
+#include "sylar/thread.h"
 #include "sylar/zk_client.h"
 
 namespace sylar {

@@ -8,7 +8,7 @@
 #include <functional>
 #include <memory>
 
-#include "sylar/thread.h"
+// #include "sylar/thread.h"
 
 namespace sylar {
 class Scheduler;

@@ -2,10 +2,14 @@
 #define __SYLAR_STREAMS_ASYNC_SOCKET_STREAM_H__
 
 #include <boost/any.hpp>
+#include <functional>
 #include <list>
 #include <unordered_map>
-#include "socket_stream.h"
-
+#include "sylar/fiber.h"
+#include "sylar/iomanager.h"
+#include "sylar/streams/socket_stream.h"
+#include "sylar/thread.h"
+#include "sylar/timer.h"
 namespace sylar {
 
 class AsyncSocketStream

@@ -7,11 +7,15 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <list>
 #include <memory>
 #include <string>
 #include <thread>
-
+#include "sylar/fiber.h"
 #include "sylar/noncopyable.h"
+
+// #include "sylar/fiber.h"
+// 循环include
 
 namespace sylar {
 
@@ -210,6 +214,28 @@ class CASLock : Noncopyable {
  private:
   // todo 什么意思
   volatile std::atomic_flag m_mutex;
+};
+
+class Fiber;
+class Scheduler;
+class FiberSemaphore : Noncopyable {
+ public:
+  typedef Spinlock MutexType;
+
+  FiberSemaphore(size_t initial_concurrency = 0);
+  ~FiberSemaphore();
+
+  bool tryWait();
+  void wait();
+  void notify();
+
+  size_t getConcurrency() const { return m_concurrency; }
+  void reset() { m_concurrency = 0; }
+
+ private:
+  MutexType m_mutex;
+  std::list<std::pair<Scheduler *, Fiber::ptr> > m_waiters;
+  size_t m_concurrency;
 };
 
 class Thread {
