@@ -97,10 +97,6 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
     }
   }
   // 检查 node serivce
-<<<<<<< HEAD
-  // 为空，进入
-=======
->>>>>>> dev_temp
   if (node.empty()) {
     // 返回一个指针指向 ":" 的位置
     service = (const char *)memchr(host.c_str(), ':', host.size());

@@ -1,11 +1,6 @@
 
-<<<<<<< HEAD
-#line 1 "/home/lyt/develop/my_sylar/sylar/uri.rl"
-#include "uri.h"
-=======
 #line 1 "/home/lyt/my_sylar/sylar/uri.rl"
 #include "sylar/uri.h"
->>>>>>> dev_temp
 #include <sstream>
 
 namespace sylar {
