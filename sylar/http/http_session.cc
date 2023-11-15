@@ -1,4 +1,4 @@
-#include "http_session.h"
+#include "sylar/http/http_session.h"
 #include <strings.h>
 #include <cstddef>
 #include <cstdint>
@@ -6,9 +6,9 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include "http/http.h"
-#include "http/http_parser.h"
-#include "socket_stream.h"
+#include "sylar/http/http.h"
+#include "sylar/http/http_parser.h"
+#include "sylar/streams/socket_stream.h"
 
 namespace sylar {
 namespace http {

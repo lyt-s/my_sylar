@@ -1,4 +1,4 @@
-#include "address.h"
+#include "sylar/address.h"
 
 #include <arpa/inet.h>
 #include <ifaddrs.h>
@@ -17,9 +17,9 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
-#include "endian.h"
-#include "iomanager.h"
-#include "log.h"
+#include "sylar/endian.h"
+#include "sylar/iomanager.h"
+#include "sylar/log.h"
 
 namespace sylar {
 
@@ -97,7 +97,10 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
     }
   }
   // 检查 node serivce
+<<<<<<< HEAD
   // 为空，进入
+=======
+>>>>>>> dev_temp
   if (node.empty()) {
     // 返回一个指针指向 ":" 的位置
     service = (const char *)memchr(host.c_str(), ':', host.size());

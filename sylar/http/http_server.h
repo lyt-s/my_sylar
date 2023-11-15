@@ -2,9 +2,9 @@
 #define SYLAR_HTTP_HTTP_SERVER_
 
 #include <memory>
-#include "http/servlet.h"
-#include "iomanager.h"
-#include "tcp_server.h"
+#include "sylar/http/servlet.h"
+#include "sylar/iomanager.h"
+#include "sylar/tcp_server.h"
 namespace sylar {
 namespace http {
 class HttpServer : public TcpServer {

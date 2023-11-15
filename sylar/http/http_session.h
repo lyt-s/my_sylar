@@ -2,9 +2,9 @@
 #define SYLAR_HTTP_HTTP_SESSION_H_
 
 #include <memory>
-#include "http/http.h"
-#include "socket.h"
-#include "socket_stream.h"
+#include "sylar/http/http.h"
+#include "sylar/socket.h"
+#include "sylar/streams/socket_stream.h"
 namespace sylar {
 namespace http {
 

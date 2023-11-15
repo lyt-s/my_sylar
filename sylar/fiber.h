@@ -8,12 +8,13 @@
 #include <functional>
 #include <memory>
 
-#include "thread.h"
+#include "sylar/thread.h"
 
 namespace sylar {
 class Scheduler;
 
-// 当成智能指针，成员方法shared_from_this-->获取当前类的智能指针， 继承了enable_shared_from_this。
+// 当成智能指针，成员方法shared_from_this-->获取当前类的智能指针，
+// 继承了enable_shared_from_this。
 // 不能在栈上创建对象，构造函数会智能指针，在构造函数中不能使用shared_from_this
 class Fiber : public std::enable_shared_from_this<Fiber> {
  public:
@@ -38,10 +39,11 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
   Fiber();
 
  public:
-  Fiber(std::function<void()> cb, size_t stacksize = 0, bool use_caller = false);
+  Fiber(std::function<void()> cb, size_t stacksize = 0,
+        bool use_caller = false);
   ~Fiber();
 
-  //重置协程函数，并重置状态
+  // 重置协程函数，并重置状态
   void reset(std::function<void()> cb);
   // 切换到当前协程执行
   void swapIn();
@@ -64,7 +66,8 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
    * @details 如果当前线程还未创建协程，则创建线程的第一个协程，
    * 且该协程为当前线程的主协程，其他协程都通过这个协程来调度，也就是说，其他协程
    * 结束时,都要切回到主协程，由主协程重新选择新的协程进行resume
-   * @attention 线程如果要创建协程，那么应该首先执行一下Fiber::GetThis()操作，以初始化主函数协程
+   * @attention
+   * 线程如果要创建协程，那么应该首先执行一下Fiber::GetThis()操作，以初始化主函数协程
    */
   static sylar::Fiber::ptr GetThis();
   // 协程切换到后台，并且设置为Ready状态

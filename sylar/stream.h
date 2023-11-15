@@ -3,7 +3,7 @@
 
 #include <cstddef>
 #include <memory>
-#include "bytearray.h"
+#include "sylar/bytearray.h"
 namespace sylar {
 class Stream {
  public:

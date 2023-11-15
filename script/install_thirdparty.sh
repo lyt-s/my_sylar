@@ -34,7 +34,6 @@ if [ ! -d "$THIRD_PARTY_DIR/boost" ]; then
     fi
 fi
 
-
 # Install yaml-cpp
 if [ ! -d "$THIRD_PARTY_DIR/yaml-cpp" ]; then
     rm -rf 0.8.0.tar.gz  yaml-cpp-0.8.0
@@ -49,6 +48,59 @@ if [ ! -d "$THIRD_PARTY_DIR/yaml-cpp" ]; then
     if [ $RET -ne 0 ]; then
         rm -rf yaml-cpp
         echo "Intall yaml-cpp failed"
+        exit 1
+    fi
+fi
+# Install ZLIB
+if [ ! -d "$THIRD_PARTY_DIR/zlib" ]; then
+    rm -rf zlib-1.2.11.tar.gz  zlib-1.2.11
+    wget http://www.zlib.net/fossils/zlib-1.2.11.tar.gz
+    tar -xf zlib-1.2.11.tar.gz
+    cd  ./zlib-1.2.11
+    ./configure --prefix=$THIRD_PARTY_DIR/zlib || RET=$?
+    make || RET=$?
+    make install || RET=$?
+    cd ..
+    rm -rf  zlib-1.2.11.tar.gz  zlib-1.2.11
+    if [ $RET -ne 0 ]; then
+        rm -rf zlib
+        echo "Intall zlib failed"
+        exit 1
+    fi
+fi
+# Install json-cpp
+if [ ! -d "$THIRD_PARTY_DIR/json-cpp" ]; then
+    rm -rf 00.11.0.tar.gz jsoncpp-00.11.0
+    wget https://github.com/open-source-parsers/jsoncpp/archive/refs/tags/00.11.0.tar.gz
+    tar -xf 00.11.0.tar.gz
+    cd  ./jsoncpp-00.11.0
+    cmake -G Ninja -S . -B ./build -DCMAKE_INSTALL_PREFIX=$THIRD_PARTY_DIR/json-cpp || RET=$?
+    cmake --build ./build || RET=$?
+    cmake --build ./build --target install || RET=$?
+    cd ..
+     rm -rf 00.11.0.tar.gz  jsoncpp-00.11.0
+    if [ $RET -ne 0 ]; then
+        rm -rf json-cpp
+        echo "Intall yaml-cpp failed"
+        exit 1
+    fi
+fi
+
+# Install protobuf
+# wget 下载不下来，是因为URL过长,此包可能出现问题，建议手动下载
+if [ ! -d "$THIRD_PARTY_DIR/protobuf" ]; then
+    rm -rf protobuf-all-21.1.tar.gz protobuf-3.21.1
+    wget -O protobuf-all-21.1.tar.gz https://github.com/protocolbuffers/protobuf/releases/download/v21.1/protobuf-all-21.1.tar.gz
+    tar -xvf protobuf-all-21.1.tar.gz
+    cd protobuf-3.21.1
+    cmake -G Ninja -S . -B ./build -DCMAKE_INSTALL_PREFIX=$THIRD_PARTY_DIR/protobuf || RET=$?
+    cmake --build ./build || RET=$?
+    cmake --build ./build --target install || RET=$?
+    cd ..
+    rm -rf protobuf-all-21.1.tar.gz  protobuf-3.21.1
+    if [ $RET -ne 0 ]; then
+        rm -rf protobuf
+        echo "Intall protobuf failed"
         exit 1
     fi
 fi

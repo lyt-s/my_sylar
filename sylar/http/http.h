@@ -314,6 +314,16 @@ class HttpResponse {
   bool isClose() const { return m_close; }
   void setClose(bool v) { m_close = v; }
 
+  /**
+   * @brief 是否websocket
+   */
+  bool isWebsocket() const { return m_websocket; }
+
+  /**
+   * @brief 设置是否websocket
+   */
+  void setWebsocket(bool v) { m_websocket = v; }
+
   std::string getHeader(const std::string &key,
                         const std::string &def = "") const;
   void setHeader(const std::string &key, const std::string &val);
@@ -337,6 +347,8 @@ class HttpResponse {
   HttpStatus m_status;
   uint8_t m_version;
   bool m_close;
+  /// 是否为websocket
+  bool m_websocket;
 
   std::string m_body;
   std::string m_reason;

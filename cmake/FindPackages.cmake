@@ -11,6 +11,28 @@ list(APPEND CMAKE_PREFIX_PATH ${THIRD_PARTY_DIR}/yaml-cpp)
 find_package(yaml-cpp REQUIRED) # COMPONENTS ALL
 message(STATUS "Find yaml-cpp in ${yaml-cpp_DIR}")
 message(STATUS "yaml-cpp version: ${yaml-cpp_VERSION}")
-set(yaml-cpp_LIBRARIES ${THIRD_PARTY_DIR}/yaml-cpp/lib/libyaml-cpp.a)
-set(yaml-cpp_INCLUDE_DIRS ${THIRD_PARTY_DIR}/yaml-cpp/include)
+set(yaml_cpp_LIBRARIES ${THIRD_PARTY_DIR}/yaml-cpp/lib/libyaml-cpp.a)
+set(yaml_cpp_INCLUDE_DIRS ${THIRD_PARTY_DIR}/yaml-cpp/include)
 
+# zlib
+list(APPEND CMAKE_PREFIX_PATH ${THIRD_PARTY_DIR}/zlib)
+# find_package(zlib REQUIRED)  大小写问题？？
+find_package(ZLIB REQUIRED) # COMPONENTS ALLs
+message(STATUS "Find zlib in ${zlib_DIR}")
+message(STATUS "zlib version: ${zlib_VERSION}")
+set(zlib_INCLUDE_DIRS  ${THIRD_PARTY_DIR}/zlib/include)
+
+# jsoncpp
+list(APPEND CMAKE_PREFIX_PATH ${THIRD_PARTY_DIR}/json-cpp)
+find_package(jsoncpp REQUIRED) # COMPONENTS ALLs
+message(STATUS "Find jsoncpp in ${jsoncpp_DIR}")
+message(STATUS "jsoncpp  version: ${jsoncpp_VERSION}")
+set(json_cpp_INCLUDE_DIRS ${THIRD_PARTY_DIR}/json-cpp/include)
+
+
+# protobuf
+list(APPEND CMAKE_PREFIX_PATH ${THIRD_PARTY_DIR}/protobuf)
+find_package(protobuf REQUIRED) # COMPONENTS ALLs
+message(STATUS "Find protobuf in ${protobuf_DIR}")
+message(STATUS "protobuf  version: ${protobuf_VERSION}")
+set(protobuf_INCLUDE_DIRS ${THIRD_PARTY_DIR}/protobuf/include)

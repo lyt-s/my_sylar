@@ -1,7 +1,7 @@
-#include "http_connection.h"
-#include "http_parser.h"
-#include "log.h"
-#include "socket.h"
+#include "sylar/http/http_connection.h"
+#include "sylar/http/http_parser.h"
+#include "sylar/log.h"
+#include "sylar/streams/zlib_stream.h"
 
 namespace sylar {
 namespace http {
@@ -80,7 +80,7 @@ HttpResponse::ptr HttpConnection::recvResponse() {
         }
         begin = false;
       } while (!parser->isFinished());
-      len -= 2;
+      // len -= 2;
 
       SYLAR_LOG_DEBUG(g_logger) << "content_len=" << client_parser.content_len;
       if (client_parser.content_len + 2 <= len) {
@@ -104,7 +104,6 @@ HttpResponse::ptr HttpConnection::recvResponse() {
         len = 0;
       }
     } while (!client_parser.chunks_done);
-    parser->getData()->setBody(body);
   } else {
     int64_t length = parser->getContentLength();
     if (length > 0) {
@@ -125,27 +124,25 @@ HttpResponse::ptr HttpConnection::recvResponse() {
           return nullptr;
         }
       }
-      parser->getData()->setBody(body);
     }
   }
-  // if (!body.empty()) {
-  //   auto content_encoding = parser->getData()->getHeader("content-encoding");
-  //   SYLAR_LOG_DEBUG(g_logger)
-  //       << "content_encoding: " << content_encoding << " size=" <<
-  //       body.size();
-  //   if (strcasecmp(content_encoding.c_str(), "gzip") == 0) {
-  //     auto zs = ZlibStream::CreateGzip(false);
-  //     zs->write(body.c_str(), body.size());
-  //     zs->flush();
-  //     zs->getResult().swap(body);
-  //   } else if (strcasecmp(content_encoding.c_str(), "deflate") == 0) {
-  //     auto zs = ZlibStream::CreateDeflate(false);
-  //     zs->write(body.c_str(), body.size());
-  //     zs->flush();
-  //     zs->getResult().swap(body);
-  //   }
-  //   parser->getData()->setBody(body);
-  // }
+  if (!body.empty()) {
+    auto content_encoding = parser->getData()->getHeader("content-encoding");
+    SYLAR_LOG_DEBUG(g_logger)
+        << "content_encoding: " << content_encoding << " size=" << body.size();
+    if (strcasecmp(content_encoding.c_str(), "gzip") == 0) {
+      auto zs = ZlibStream::CreateGzip(false);
+      zs->write(body.c_str(), body.size());
+      zs->flush();
+      zs->getResult().swap(body);
+    } else if (strcasecmp(content_encoding.c_str(), "deflate") == 0) {
+      auto zs = ZlibStream::CreateDeflate(false);
+      zs->write(body.c_str(), body.size());
+      zs->flush();
+      zs->getResult().swap(body);
+    }
+    parser->getData()->setBody(body);
+  }
   return parser->getData();
 }
 
@@ -240,17 +237,15 @@ HttpResult::ptr HttpConnection::DoRequest(
 
 HttpResult::ptr HttpConnection::DoRequest(HttpRequest::ptr req, Uri::ptr uri,
                                           uint64_t timeout_ms) {
-  // bool is_ssl = uri->getScheme() == "https";
+  bool is_ssl = uri->getScheme() == "https";
   Address::ptr addr = uri->createAddress();
   if (!addr) {
     return std::make_shared<HttpResult>((int)HttpResult::Error::INVALID_HOST,
                                         nullptr,
                                         "invalid host: " + uri->getHost());
   }
-  // Socket::ptr sock =
-  //     is_ssl ? SSLSocket::CreateTCP(addr) : Socket::CreateTCP(addr);
-
-  Socket::ptr sock = Socket::CreateTCP(addr);
+  Socket::ptr sock =
+      is_ssl ? SSLSocket::CreateTCP(addr) : Socket::CreateTCP(addr);
   if (!sock) {
     return std::make_shared<HttpResult>(
         (int)HttpResult::Error::CREATE_SOCKET_ERROR, nullptr,
@@ -345,9 +340,8 @@ HttpConnection::ptr HttpConnectionPool::getConnection() {
       return nullptr;
     }
     addr->setPort(m_port);
-    // Socket::ptr sock =
-    //     m_isHttps ? SSLSocket::CreateTCP(addr) : Socket::CreateTCP(addr);
-    Socket::ptr sock = Socket::CreateTCP(addr);
+    Socket::ptr sock =
+        m_isHttps ? SSLSocket::CreateTCP(addr) : Socket::CreateTCP(addr);
     if (!sock) {
       SYLAR_LOG_ERROR(g_logger) << "create sock fail: " << *addr;
       return nullptr;

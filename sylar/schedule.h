@@ -9,8 +9,8 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include "fiber.h"
-#include "thread.h"
+#include "sylar/fiber.h"
+#include "sylar/thread.h"
 
 namespace sylar {
 
@@ -35,7 +35,8 @@ class Scheduler {
    * @param[in] use_caller 是否使用当前调用线程，true的话就会纳入到调度中
    * @param[in] name 协程调度器名称，线程池名称，
    */
-  Scheduler(size_t threads = 1, bool use_caller = true, const std::string &name = "");
+  Scheduler(size_t threads = 1, bool use_caller = true,
+            const std::string &name = "");
 
   /**
    * @brief 析构函数
@@ -80,7 +81,8 @@ class Scheduler {
       need_tickle = scheduleNoLock(fc, thread);
     }
 
-    // 待执行队列为空时，然后添加了一个带执行的任务， 则执行下面语句，具体细节查看scheduleNoLock
+    // 待执行队列为空时，然后添加了一个带执行的任务，
+    // 则执行下面语句，具体细节查看scheduleNoLock
     if (need_tickle) {
       tickle();
     }
@@ -97,7 +99,8 @@ class Scheduler {
     {
       MutexType::Lock lock(m_mutex);
       while (begin != end) {
-        // 参数为指针，取得是地址，会将里面的东西 swap掉。---这里怎么确认是callback还是fiber？？
+        // 参数为指针，取得是地址，会将里面的东西
+        // swap掉。---这里怎么确认是callback还是fiber？？
         need_tickle = scheduleNoLock(&*begin, -1) || need_tickle;
         // 没有++begin  --》死循环
         ++begin;  // 注意迭代器问题
@@ -198,7 +201,9 @@ class Scheduler {
      * @param[in] thr 线程id
      * @post *f = nullptr
      */
-    FiberAndThread(std::function<void()> *f, int thr) : thread(thr) { cb.swap(*f); }
+    FiberAndThread(std::function<void()> *f, int thr) : thread(thr) {
+      cb.swap(*f);
+    }
 
     /**
      * @brief 无参构造函数

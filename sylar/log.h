@@ -6,20 +6,21 @@
 #include <map>
 #include <memory>
 #include <ostream>
-#include <sstream>  //
+#include <sstream>
 #include <string>
 #include <vector>
-#include "singleton.h"
-#include "thread.h"
-#include "util.h"
+#include "sylar/singleton.h"
+#include "sylar/thread.h"
+#include "sylar/util.h"
 /**
  * @brief 使用流式方式将日志级别level的日志写入到logger
  */
-#define SYLAR_LOG_LEVEL(logger, level)                                                \
-  if (logger->getLevel() <= level)                                                    \
-  sylar::LogEventWrap(sylar::LogEvent::ptr(new sylar::LogEvent(                       \
-                          logger, level, __FILE__, __LINE__, 0, sylar::GetThreadId(), \
-                          sylar::GetFiberId(), time(0), sylar::Thread::GetName())))   \
+#define SYLAR_LOG_LEVEL(logger, level)                                \
+  if (logger->getLevel() <= level)                                    \
+  sylar::LogEventWrap(                                                \
+      sylar::LogEvent::ptr(new sylar::LogEvent(                       \
+          logger, level, __FILE__, __LINE__, 0, sylar::GetThreadId(), \
+          sylar::GetFiberId(), time(0), sylar::Thread::GetName())))   \
       .getSS()
 
 /**
@@ -50,12 +51,13 @@
 /**
  * @brief 使用格式化方式将日志级别level的日志写入到logger
  */
-#define SYLAR_LOG_FMT_LEVEL(logger, level, fmt, ...)                                  \
-  if (logger->getLevel() <= level)                                                    \
-  sylar::LogEventWrap(sylar::LogEvent::ptr(new sylar::LogEvent(                       \
-                          logger, level, __FILE__, __LINE__, 0, sylar::GetThreadId(), \
-                          sylar::GetFiberId(), time(0), sylar::Thread::GetName())))   \
-      .getEvent()                                                                     \
+#define SYLAR_LOG_FMT_LEVEL(logger, level, fmt, ...)                  \
+  if (logger->getLevel() <= level)                                    \
+  sylar::LogEventWrap(                                                \
+      sylar::LogEvent::ptr(new sylar::LogEvent(                       \
+          logger, level, __FILE__, __LINE__, 0, sylar::GetThreadId(), \
+          sylar::GetFiberId(), time(0), sylar::Thread::GetName())))   \
+      .getEvent()                                                     \
       ->format(fmt, __VA_ARGS__)
 
 /**
@@ -157,9 +159,9 @@ class LogEvent {
    * @param[in] time 日志事件(秒)
    * @param[in] thread_name 线程名称
    */
-  LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char *file, int32_t line,
-           uint32_t elapse, uint32_t thread_id, uint32_t fiber_id, uint64_t time,
-           const std::string &thread_name);
+  LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
+           const char *file, int32_t line, uint32_t elapse, uint32_t thread_id,
+           uint32_t fiber_id, uint64_t time, const std::string &thread_name);
 
   /**
    * @brief 返回文件名
@@ -315,9 +317,10 @@ class LogFormatter {
    * @param[in] level 日志级别
    * @param[in] event 日志事件
    */
-  std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
-  std::ostream &format(std::ostream &ofs, std::shared_ptr<Logger> logger, LogLevel::Level level,
-                       LogEvent::ptr event);
+  std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level,
+                     LogEvent::ptr event);
+  std::ostream &format(std::ostream &ofs, std::shared_ptr<Logger> logger,
+                       LogLevel::Level level, LogEvent::ptr event);
 
  public:
   /**
@@ -338,8 +341,8 @@ class LogFormatter {
      * @param[in] level 日志等级
      * @param[in] event 日志事件
      */
-    virtual void format(std::ostream &os, std::shared_ptr<Logger> logger, LogLevel::Level level,
-                        LogEvent::ptr event) = 0;
+    virtual void format(std::ostream &os, std::shared_ptr<Logger> logger,
+                        LogLevel::Level level, LogEvent::ptr event) = 0;
   };
 
   /**
@@ -384,7 +387,8 @@ class LogAppender {
    * @param[in] level 日志级别
    * @param[in] event 日志事件
    */
-  virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
+  virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
+                   LogEvent::ptr event) = 0;
 
   /**
    * @brief 将日志输出目标的配置转成YAML String
@@ -549,7 +553,8 @@ class Logger : public std::enable_shared_from_this<Logger> {
 class StdoutLogAppender final : public LogAppender {
  public:
   typedef std::shared_ptr<StdoutLogAppender> ptr;
-  void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
+  void log(Logger::ptr logger, LogLevel::Level level,
+           LogEvent::ptr event) override;
   std::string toYamlString() override;
 };
 
@@ -561,7 +566,8 @@ class FileLogAppender final : public LogAppender {
   typedef std::shared_ptr<FileLogAppender> ptr;
 
   FileLogAppender(const std::string &filename);
-  void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
+  void log(Logger::ptr logger, LogLevel::Level level,
+           LogEvent::ptr event) override;
   std::string toYamlString() override;
 
   /**
