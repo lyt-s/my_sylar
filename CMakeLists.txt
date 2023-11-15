@@ -28,6 +28,9 @@ ragelmaker(sylar/uri.rl LIB_SRC ${CMAKE_SOURCE_DIR}/sylar)
 
 ragelmaker(sylar/http/http11_parser.rl LIB_SRC ${CMAKE_SOURCE_DIR}/sylar/http)
 ragelmaker(sylar/http/httpclient_parser.rl LIB_SRC ${CMAKE_SOURCE_DIR}/sylar/http)
+
+
+include_directories(${CMAKE_BINARY_DIR}/sylar/proto)
 # 可执行文件输出位置
 # SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
