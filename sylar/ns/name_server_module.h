@@ -1,8 +1,8 @@
 #ifndef __SYLAR_NS_NAME_SERVER_MODULE_H__
 #define __SYLAR_NS_NAME_SERVER_MODULE_H__
 
-#include "ns_protocol.h"
 #include "sylar/module.h"
+#include "sylar/ns/ns_protocol.h"
 
 namespace sylar {
 namespace ns {

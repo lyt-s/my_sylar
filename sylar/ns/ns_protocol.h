@@ -6,7 +6,7 @@
 #include <map>
 #include <memory>
 #include <string>
-#include "ns_protobuf.pb.h"
+#include "sylar/ns/ns_protobuf.pb.h"
 #include "sylar/thread.h"
 
 namespace sylar {
