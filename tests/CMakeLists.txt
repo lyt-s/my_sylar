@@ -1,7 +1,7 @@
-
 # 可执行文件输出位置
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/tests)
-
+# # 可执行文件输出位置 build/bin/test
+# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/tests)
 #----test-----------------------------------------------------------------------
 add_executable(test test.cc)
 add_dependencies(test sylar)
@@ -199,5 +199,4 @@ target_include_directories(test_application PRIVATE  ${CMAKE_SOURCE_DIR}
             
 
 target_link_libraries(test_application PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
-# 可执行文件输出位置
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/tests)
+
