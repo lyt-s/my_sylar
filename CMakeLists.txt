@@ -38,7 +38,5 @@ add_subdirectory(sylar)
 
 # test
 add_subdirectory(tests)
-
-
 add_subdirectory(examples)
 add_subdirectory(samples)
