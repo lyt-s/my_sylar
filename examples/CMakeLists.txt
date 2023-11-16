@@ -9,4 +9,4 @@ target_include_directories(echo_server PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
 
-target_link_libraries(echo_server PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+target_link_libraries(echo_server PRIVATE   sylar)

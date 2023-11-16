@@ -10,4 +10,4 @@ target_include_directories(my_http_server PRIVATE  ${CMAKE_SOURCE_DIR}
                                                 ${yaml-cpp_INCLUDE_DIRS} 
                                                 ${Boost_INCLUDE_DIRS})
 
-target_link_libraries(my_http_server PRIVATE  dl pthread sylar ${Boost_LIBRARIES})
+target_link_libraries(my_http_server PRIVATE sylar)
