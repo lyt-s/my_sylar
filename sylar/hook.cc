@@ -89,6 +89,7 @@ struct timer_info {
 template <typename OriginFun, typename... Args>
 static ssize_t do_io(int fd, OriginFun fun, const char *hook_fun_name,
                      uint32_t event, int timeout_so, Args &&...args) {
+  // 没有hook直接返回原函数
   if (!sylar::t_hook_enable) {
     //  read(int fd, void *buf, size_t count)
     //  return do_io(fd, read_f, "read", sylar::IOManager::READ, SO_RCVTIMEO,
@@ -99,80 +100,99 @@ static ssize_t do_io(int fd, OriginFun fun, const char *hook_fun_name,
   SYLAR_LOG_DEBUG(g_logger) << "do_io <" << hook_fun_name << ">";
   // 得到fd 对应的 FdCtx
   sylar::FdCtx::ptr ctx = sylar::FdMgr::GetInstance()->get(fd);
+  // 不存在则不是socket, 按照原来方式，不管他
   if (!ctx) {
     return fun(fd, std::forward<Args>(args)...);
   }
+  // 存在，且已经关闭了，改errno
   if (ctx->isClosed()) {
     // Bad file descriptor
     errno = EBADF;
     return -1;
   }
 
-  // 判断传入的fd是否为套接字，如果不为套接字，则调用系统的connect函数并返回。
-  // 判断fd是否被显式设置为了非阻塞模式，如果是则调用系统的connect函数并返回。
+  // 如果不是socket或者用户已经设置了非阻塞，那我们也不管
   if (!ctx->isSocket() || ctx->getUserNonblock()) {
     return fun(fd, std::forward<Args>(args)...);
   }
 
   uint64_t to = ctx->getTimeout(timeout_so);
-  // todo  make_shared
+  // 创建条件
   std::shared_ptr<timer_info> tinfo = std::make_shared<timer_info>();
 
 retry:
+  // 执行原始方法，异步io
   ssize_t n = fun(fd, std::forward<Args>(args)...);
   // EINTR ---Interrupted system call
+  // 如果读到了，就可以直接返回出去--->return n;
+  // 如果没有读到，这种情况下，重试原始方法
   while (n == -1 && errno == EINTR) {
     n = fun(fd, std::forward<Args>(args)...);
   }
+  // 这种是阻塞状态,需要做异步操作
   if (n == -1 && errno == EAGAIN) {
     SYLAR_LOG_DEBUG(g_logger) << "do_io" << hook_fun_name << ">";
     sylar::IOManager *iom = sylar::IOManager::GetThis();
     sylar::Timer::ptr timer;
+    // 条件变量，
     std::weak_ptr<timer_info> winfo(tinfo);
 
     // (uint64_t)-1 = 18446744073709551615 (0xffffffffffffffff)
+    // 就是设置了超时时间的情况时，超时器，超时时间
     if (to != (uint64_t)-1) {
+      // 等待设置的时间，还没来的话，触发定时器回调，
       timer = iom->addConditionTimer(
           to,
           [winfo, fd, iom, event]() {
+            // 定时器回来时，要lock todo --->shared_ptr lock
             auto t = winfo.lock();
+            // 如果没有t，或者取消了
             if (!t || t->cancelled) {
               return;
             }
             t->cancelled = ETIMEDOUT;
+            // 取消事件，强制唤醒 ,到达时间后，强制唤醒
             iom->cancelEvent(fd, (sylar::IOManager::Event)(event));
           },
           winfo);
     }
 
-    /// 若读阻塞说明 缓冲区空 写阻塞 缓冲区满
-    /// 添加 可读可写事件，即可获取协程唤醒的标志
+    /// 可读可写事件，即可获取协程唤醒的标志，这里默认以当前协程，作为回调函数
     int rt = iom->addEvent(fd, (sylar::IOManager::Event)(event));
-    if (rt) {
+    // 失败的情况，直接返回。
+    if (SYLAR_UNLIKELY(rt)) {
       SYLAR_LOG_ERROR(g_logger)
           << hook_fun_name << " addEvent(" << fd << ", " << event << ")";
-
+      //  定时器添加失败
       if (timer) {
         timer->cancel();
       }
       return -1;
 
     } else {
+      // 成功
       // SYLAR_LOG_ERROR(g_logger) << "do_io<" << hook_fun_name << ">";
+      // 让出当前协程的执行时间
       sylar::Fiber::YieldToHold();
       // SYLAR_LOG_ERROR(g_logger) << "do_io<" << hook_fun_name << ">";
+      // 有定时器的话，timer，则取消掉
+      // 两种情况到这里
+      // 1. 真的有事件发生了
+      // 2. 设置的定时器超时了，
       if (timer) {
         timer->cancel();
       }
+      // 去掉的里面有cancelld
+      // 的话，说明是通过定时器超时将这里唤醒的，这设置errno
       if (tinfo->cancelled) {
         errno = tinfo->cancelled;
         return -1;
       }
-
+      // 否则说明有io时间返回，那我们重新读
       goto retry;  // todo
     }
   }
-
+  // 读到数据，返回n
   return n;
 }
 
@@ -196,6 +216,7 @@ unsigned int sleep(unsigned int seconds) {
   sylar::IOManager *iom = sylar::IOManager::GetThis();
   iom->addTimer(
       seconds * 1000,
+      // 模板方法进行bind时，要声明他的bind类型，还有默认参数要写进去，否则会显示没有此函数。
       std::bind((void(sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
                     sylar::IOManager::schedule,
                 iom, fiber, -1));
@@ -253,22 +274,25 @@ int socket(int domain, int type, int protocol) {
   sylar::FdMgr::GetInstance()->get(fd, true);
   return fd;
 }
+
 // todo
 int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
                          uint64_t timeout_ms) {
+  // 没有hook
   if (!sylar::t_hook_enable) {
     return connect_f(fd, addr, addrlen);
   }
   sylar::FdCtx::ptr ctx = sylar::FdMgr::GetInstance()->get(fd);
+  // 文件句柄， 不存在或者关闭
   if (!ctx || ctx->isClosed()) {
     errno = EBADF;
     return -1;
   }
-
+  // 不是socket
   if (!ctx->isSocket()) {
     return connect_f(fd, addr, addrlen);
   }
-  // 判断fd是否被显式设置为了非阻塞模式，如果是则调用系统的connect函数并返回。
+  // 判断fd是否被用户显式设置为了非阻塞模式，如果是则调用系统的connect函数并返回。
   if (ctx->getUserNonblock()) {
     return connect_f(fd, addr, addrlen);
   }
@@ -307,12 +331,15 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
   }
 
   /// 注册可写事件 回调为当前协程
-  /// 说明连接成功已经可写
+  /// 连接成功说明已经可写
   /// 非阻塞connect的完成被认为是使响应套接字可写
   int rt = iom->addEvent(fd, sylar::IOManager::WRITE);
+  // 这addEvent成功
   if (rt == 0) {
     /// 关键点:切换出去，让出CPU执行权
+    // 在这里唤醒时，要么连接成功，要么超时
     sylar::Fiber::YieldToHold();
+    // 定时器取消
     if (timer) {
       timer->cancel();
     }
@@ -323,13 +350,16 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
       return -1;
     }
   } else {
+    // 失败时，有定时器的话，取消掉
     if (timer) {
       timer->cancel();
     }
     SYLAR_LOG_ERROR(g_logger) << "connect addevent(" << fd << ",WRITE) error";
   }
+  // connect 可写时，就表明连接成功，不需要做其他事情。
   int error = 0;
   socklen_t len = sizeof(int);
+  // 取出状态，检查是否有error
   if (-1 == getsockopt_f(fd, SOL_SOCKET, SO_ERROR, &error, &len)) {
     return -1;
   }
