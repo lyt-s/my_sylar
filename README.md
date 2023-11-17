@@ -39,6 +39,10 @@ sudo apt install ragel
  boost yaml-cpp protobuf Zlib redis json-cpp 
 ```
 
+``` bash
+sudo apt-get install libmysqlclient-dev
+```
+
 只需要运行下面的脚本即可
 
 * Ubuntu 22.04  gcc 11.4

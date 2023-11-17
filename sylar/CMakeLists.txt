@@ -12,6 +12,7 @@ target_include_directories(sylar    PUBLIC
                                     ${json_cpp_INCLUDE_DIRS}
                                     ${zlib_INCLUDE_DIRS}
                                     ${protobuf_INCLUDE_DIRS}
+                                    ${Redis_INCLUDE_DIRS}
                                     )
 
 target_link_libraries(sylar PUBLIC 

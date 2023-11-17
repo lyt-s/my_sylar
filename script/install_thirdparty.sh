@@ -87,7 +87,7 @@ if [ ! -d "$THIRD_PARTY_DIR/json-cpp" ]; then
 fi
 
 # Install protobuf
-# wget 下载不下来，是因为URL过长,此包可能出现问题，建议手动下载
+# 此包可能出现问题，建议手动下载
 if [ ! -d "$THIRD_PARTY_DIR/protobuf" ]; then
     rm -rf protobuf-all-21.1.tar.gz protobuf-3.21.1
     wget -O protobuf-all-21.1.tar.gz https://github.com/protocolbuffers/protobuf/releases/download/v21.1/protobuf-all-21.1.tar.gz
@@ -104,3 +104,52 @@ if [ ! -d "$THIRD_PARTY_DIR/protobuf" ]; then
         exit 1
     fi
 fi
+
+# Install hiredis
+if [ ! -d "$THIRD_PARTY_DIR/hiredis" ]; then
+    rm -rf v1.2.0.tar.gz hiredis-1.2.0
+    wget  https://github.com/redis/hiredis/archive/refs/tags/v1.2.0.tar.gz
+    tar -xvf v1.2.0.tar.gz
+    cd hiredis-1.2.0
+    cmake -G Ninja -S . -B ./build -DCMAKE_INSTALL_PREFIX=$THIRD_PARTY_DIR/hiredis || RET=$?
+    cmake --build ./build || RET=$?
+    cmake --build ./build --target install || RET=$?
+    cd ..
+    rm -rf v1.2.0.tar.gz hiredis-1.2.0
+    if [ $RET -ne 0 ]; then
+        rm -rf hiredis
+        echo "Intall hiredis failed"
+        exit 1
+    fi
+fi
+
+# Install redis
+if [ ! -d "$THIRD_PARTY_DIR/redis" ]; then
+    rm -rf redis-5.0.14.tar.gz redis-5.0.14
+    wget  https://github.com/redis/hiredis/archive/refs/tags/v1.2.0.tar.gz
+    tar -xvf redis-5.0.14.tar.gz
+    cd redis-5.0.14
+    make || RET=$?
+    make test || RET=$?
+    make install PREFIX=../../redis || RET=$?
+    cd ..
+    rm -rf redis-5.0.14.tar.gz redis-5.0.14
+    if [ $RET -ne 0 ]; then
+        rm -rf redis
+        echo "Intall redis failed"
+        exit 1
+    fi
+fi
+
+#  make test		
+# // 报错：You need tcl 8.5 or newer in order to run the Redis test
+
+# // 报错：*** [err]: Active defrag big keys in tests/unit/memefficiency.tcl Expected condition ‘$max_latency <= 120’ to be true (137 <= 120)
+# // 解决：vim tests/unit/memefficiency.tcl	改成 max_latency <= 150
+
+# $ cd ..
+# $ wget http://downloads.sourceforge.net/tcl/tcl8.6.1-src.tar.gz 
+# $ tar xvf tcl8.6.1-src.tar.gz 
+# $ cd tcl8.6.1/unix
+# $ ./configure --prefix=/apps/bread					
+# $ make & make install

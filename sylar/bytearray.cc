@@ -122,8 +122,8 @@ static uint64_t EncodeZigzag64(const int64_t &v) {
 static int32_t DecodeZigzag32(const uint32_t &v) { return (v >> 1) ^ -(v & 1); }
 
 static int64_t DecodeZigzag64(const uint64_t &v) { return (v >> 1) ^ -(v & 1); }
-// 可变长度
 
+// 可变长度
 void ByteArray::writeInt32(int32_t value) {
   writeUint32(EncodeZigzag32(value));
 }
