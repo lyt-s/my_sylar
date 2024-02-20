@@ -29,8 +29,8 @@ static thread_local Fiber *t_fiber = nullptr;
 /// 线程局部变量，每个线程独有一份，当前线程的主协程，切换到这个协程，就相当于切换到了主协程中运行，智能指针形式
 static thread_local Fiber::ptr t_threadFiber = nullptr;
 
-static ConfigVar<u_int32_t>::ptr g_fiber_stack_size =
-    Config::Lookup<u_int32_t>("fiber.stack_size", 1024 * 1024, "fiber stack size");
+static ConfigVar<u_int32_t>::ptr g_fiber_stack_size = Config::Lookup<u_int32_t>(
+    "fiber.stack_size", 1024 * 1024, "fiber stack size");
 
 class MallocStackAllocator {
  public:
@@ -165,7 +165,8 @@ void Fiber::SetThis(Fiber *f) { t_fiber = f; }
  * @details 如果当前线程还未创建协程，则创建线程的第一个协程，
  * 且该协程为当前线程的主协程，其他协程都通过这个协程来调度，也就是说，其他协程
  * 结束时,都要切回到主协程，由主协程重新选择新的协程进行resume
- * @attention 线程如果要创建协程，那么应该首先执行一下Fiber::GetThis()操作，以初始化主函数协程
+ * @attention
+ * 线程如果要创建协程，那么应该首先执行一下Fiber::GetThis()操作，以初始化主函数协程
  */
 sylar::Fiber::ptr Fiber::GetThis() {
   if (t_fiber) {
@@ -207,8 +208,8 @@ void Fiber::MainFunc() {
     cur->m_state = TERM;
   } catch (std::exception &ex) {
     cur->m_state = EXCEPT;
-    SYLAR_LOG_ERROR(g_logger) << "Fiber Except: " << ex.what() << " fiber_id=" << cur->getId()
-                              << std::endl
+    SYLAR_LOG_ERROR(g_logger) << "Fiber Except: " << ex.what()
+                              << " fiber_id=" << cur->getId() << std::endl
                               << sylar::BacktraceToString();
   } catch (...) {
     cur->m_state = EXCEPT;
@@ -221,7 +222,8 @@ void Fiber::MainFunc() {
   cur.reset();
   raw_ptr->swapOut();  // 协程结束时自动swapOut，以回到主协程(调度协程)
 
-  SYLAR_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
+  SYLAR_ASSERT2(false,
+                "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
 
 void Fiber::CallerMainFunc() {
@@ -233,8 +235,8 @@ void Fiber::CallerMainFunc() {
     cur->m_state = TERM;
   } catch (std::exception &ex) {
     cur->m_state = EXCEPT;
-    SYLAR_LOG_ERROR(g_logger) << "Fiber Except: " << ex.what() << " fiber_id=" << cur->getId()
-                              << std::endl
+    SYLAR_LOG_ERROR(g_logger) << "Fiber Except: " << ex.what()
+                              << " fiber_id=" << cur->getId() << std::endl
                               << sylar::BacktraceToString();
   } catch (...) {
     cur->m_state = EXCEPT;
@@ -248,6 +250,7 @@ void Fiber::CallerMainFunc() {
   // 和MianFunc的区别
   raw_ptr->back();  // 协程结束时自动swapOut，这里回到主线程的主协程
 
-  SYLAR_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
+  SYLAR_ASSERT2(false,
+                "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
 }  // namespace sylar

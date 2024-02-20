@@ -21,13 +21,12 @@ int main() {
   SYLAR_LOG_INFO(g_logger) << "main";
   // // bug--已解决
   // sylar::Scheduler sc(1, true, "test");
-  sylar::Scheduler sc(2, true, "test");
+  sylar::Scheduler sc(1, true, "test");
 
   sc.start();
   // sleep(2);
   SYLAR_LOG_INFO(g_logger) << "schedule";
-  // 添加任务
-
+  // 添加调度任务
   sc.schedule(&test_fiber);
   sc.stop();
   SYLAR_LOG_INFO(g_logger) << "over";
