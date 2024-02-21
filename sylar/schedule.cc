@@ -23,7 +23,8 @@ static thread_local Scheduler *t_scheduler = nullptr;
 // 主协程函数 --->保存当前线程的调度协程
 static thread_local Fiber *t_scheduler_fiber = nullptr;
 
-Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name) : m_name(name) {
+Scheduler::Scheduler(size_t threads, bool use_caller, const std::string &name)
+    : m_name(name) {
   // 首先输入的线程要大于0
   SYLAR_ASSERT(threads > 0);
 
@@ -82,8 +83,8 @@ void Scheduler::start() {
   // 此时配置线程池，线程都跑run方法，
   m_threads.resize(m_threadCount);
   for (size_t i = 0; i < m_threadCount; ++i) {
-    m_threads[i].reset(
-        new Thread(std::bind(&Scheduler::run, this), m_name + "_" + std::to_string(i)));
+    m_threads[i].reset(new Thread(std::bind(&Scheduler::run, this),
+                                  m_name + "_" + std::to_string(i)));
     // 线程构造函数放置信号量，确保线程跑起来，才能真正拿到线程id。
     m_threadIds.push_back(m_threads[i]->getId());
   }
@@ -102,12 +103,14 @@ void Scheduler::start() {
 void Scheduler::stop() {
   // 两种情况
   // 一种是用了 use_caller。 -- 必须要去创建schedule的哪个线程去执行stop。
-  // 一种是未使用， 对应额外创建一个线程进行协程调度、main函数线程不参与调度的情况。
+  // 一种是未使用，
+  // 对应额外创建一个线程进行协程调度、main函数线程不参与调度的情况。
   m_autoStop = true;
   // m_rootFiber是指创建schedule方法的线程中的协程的里面的执行run的那个协程-->调度协程;
   // TERM --->结束状态, INIT---> 初始化状态
   if (m_rootFiber && m_threadCount == 0 &&
-      (m_rootFiber->getState() == Fiber::TERM || m_rootFiber->getState() == Fiber::INIT)) {
+      (m_rootFiber->getState() == Fiber::TERM ||
+       m_rootFiber->getState() == Fiber::INIT)) {
     SYLAR_LOG_INFO(g_logger) << this << "stopped";
     // 此时已结束，或者未跑起来，那么我们就要设置结束
     m_stopping = true;
@@ -146,14 +149,16 @@ void Scheduler::stop() {
   /// 在use caller情况下，调度器协程结束时，应该返回caller协程
   if (m_rootFiber) {
     // while (!stopping()) {
-    //   if (m_rootFiber->getState() == Fiber::TERM || m_rootFiber->getState() == Fiber::EXCEPT) {
-    //     m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0, true));
-    //     SYLAR_LOG_INFO(g_logger) << "root fiber is term, reset";
+    //   if (m_rootFiber->getState() == Fiber::TERM || m_rootFiber->getState()
+    //   == Fiber::EXCEPT) {
+    //     m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0,
+    //     true)); SYLAR_LOG_INFO(g_logger) << "root fiber is term, reset";
     //     // bug
     //     t_scheduler_fiber = m_rootFiber.get();
     //   }
     //   m_rootFiber->call();
     if (!stopping()) {
+      // main 函数的协程，执行任务是在此处开始
       m_rootFiber->call();
       SYLAR_LOG_DEBUG(g_logger) << "m_rootFiber end";
     }
@@ -176,7 +181,8 @@ void Scheduler::tickle() { SYLAR_LOG_INFO(g_logger) << "tickle"; }
 
 bool Scheduler::stopping() {
   MutexType::Lock lock(m_mutex);
-  return m_autoStop && m_stopping && m_fibers.empty() && m_activeThreadCount == 0;
+  return m_autoStop && m_stopping && m_fibers.empty() &&
+         m_activeThreadCount == 0;
 }
 
 // 没有任务时，执行idle
@@ -210,7 +216,8 @@ void Scheduler::run() {
   }
 
   // Fiber::ptr idle_fiber(new Fiber(std::bind(&Scheduler::idle, this)));
-  Fiber::ptr idle_fiber = std::make_shared<Fiber>(std::bind(&Scheduler::idle, this));
+  Fiber::ptr idle_fiber =
+      std::make_shared<Fiber>(std::bind(&Scheduler::idle, this));
   Fiber::ptr cb_fiber;
 
   // 协程和线程
@@ -225,7 +232,8 @@ void Scheduler::run() {
       MutexType::Lock lock(m_mutex);
       auto it = m_fibers.begin();
       while (it != m_fibers.end()) {
-        // 如果一个任务(协程)已经指定好在哪个线程执行，我当前执行run的线程id != 他期望的线程id
+        // 如果一个任务(协程)已经指定好在哪个线程执行，我当前执行run的线程id !=
+        // 他期望的线程id
         if (it->thread != -1 && it->thread != sylar::GetThreadId()) {
           ++it;
           // 通知别人来处理，后面可以优化，通知这里。
@@ -243,7 +251,8 @@ void Scheduler::run() {
         // 开始处理
         ft = *it;
         tickle_me = true;
-        m_fibers.erase(it++);  // 从待处理队列中删除，这里注意迭代器删除的细节，当心bug
+        m_fibers.erase(
+            it++);  // 从待处理队列中删除，这里注意迭代器删除的细节，当心bug
         ++m_activeThreadCount;
         is_active = true;
         break;  // while 只循环一次，目的是依次处理每个待处理的任务。
@@ -257,8 +266,8 @@ void Scheduler::run() {
     }
 
     // 执行这个协程，fiber的方式
-    if (ft.fiber &&
-        (ft.fiber->getState() != Fiber::TERM && ft.fiber->getState() != Fiber::EXCEPT)) {
+    if (ft.fiber && (ft.fiber->getState() != Fiber::TERM &&
+                     ft.fiber->getState() != Fiber::EXCEPT)) {
       // 执行 ft，唤醒，去执行
       ft.fiber->swapIn();
       // 执行完之后，数量--
@@ -266,7 +275,8 @@ void Scheduler::run() {
       // 判断是否需要再次执行
       if (ft.fiber->getState() == Fiber::READY) {
         schedule(ft.fiber);
-      } else if (ft.fiber->getState() != Fiber::TERM && ft.fiber->getState() != Fiber::EXCEPT) {
+      } else if (ft.fiber->getState() != Fiber::TERM &&
+                 ft.fiber->getState() != Fiber::EXCEPT) {
         // 设置暂停状态，除了上面的判断的语句外，除了ready， 就是hold状态
         ft.fiber->m_state = Fiber::HOLD;
       }
@@ -292,10 +302,11 @@ void Scheduler::run() {
       if (cb_fiber->getState() == Fiber::READY) {
         schedule(cb_fiber);
         cb_fiber.reset();  // 智能指针reset
-      } else if (cb_fiber->getState() == Fiber::EXCEPT || cb_fiber->getState() == Fiber::TERM) {
+      } else if (cb_fiber->getState() == Fiber::EXCEPT ||
+                 cb_fiber->getState() == Fiber::TERM) {
         cb_fiber->reset(
             nullptr);  // 出现异常或者执行完成，智能指针的reset，释放掉，并没有引起他的析构
-      } else  // if (cb_fiber->getState() != Fiber::TERM)
+      } else           // if (cb_fiber->getState() != Fiber::TERM)
       {
         // 没有结束，设置暂停状态
         cb_fiber->m_state = Fiber::HOLD;
@@ -321,10 +332,12 @@ void Scheduler::run() {
       // ？？在执行idle_fiber时，来了任务要怎么唤醒
       idle_fiber->swapIn();
       --m_idleThreadCount;
-      // if (idle_fiber->getState() != Fiber::TERM || idle_fiber->getState() != Fiber::EXCEPT) //
+      // if (idle_fiber->getState() != Fiber::TERM || idle_fiber->getState() !=
+      // Fiber::EXCEPT) //
       // ---> bug
       // idle_fiber执行完之后，判断状态来进行处理，
-      if (idle_fiber->getState() != Fiber::TERM && idle_fiber->getState() != Fiber::EXCEPT) {
+      if (idle_fiber->getState() != Fiber::TERM &&
+          idle_fiber->getState() != Fiber::EXCEPT) {
         idle_fiber->m_state = Fiber::HOLD;
       }
     }
