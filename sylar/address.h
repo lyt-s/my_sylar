@@ -123,7 +123,7 @@ class Address {
   /**
    * @brief 可读性输出地址
    */
-  virtual std::ostream &insert(std::ostream &os) const = 0;
+  inline virtual std::ostream &insert(std::ostream &os) const = 0;
 
   /**
    * @brief 返回可读性字符串
@@ -166,31 +166,31 @@ class IPAddress : public Address {
    * @param[in] prefix_len 子网掩码位数
    * @return 调用成功返回IPAddress,失败返回nullptr
    */
-  virtual IPAddress::ptr broadcastAddress(uint32_t prefix_len) = 0;
+  inline virtual IPAddress::ptr broadcastAddress(uint32_t prefix_len) = 0;
 
   /**
    * @brief 获取该地址的网段
    * @param[in] prefix_len 子网掩码位数
    * @return 调用成功返回IPAddress,失败返回nullptr
    */
-  virtual IPAddress::ptr networdAddress(uint32_t prefix_len) = 0;
+  inline virtual IPAddress::ptr networdAddress(uint32_t prefix_len) = 0;
 
   /**
    * @brief 获取子网掩码地址
    * @param[in] prefix_len 子网掩码位数
    * @return 调用成功返回IPAddress,失败返回nullptr
    */
-  virtual IPAddress::ptr subnetMask(uint32_t prefix_len) = 0;
+  inline virtual IPAddress::ptr subnetMask(uint32_t prefix_len) = 0;
 
   /**
    * @brief 返回端口号
    */
-  virtual uint32_t getPort() const = 0;
+  inline virtual uint32_t getPort() const = 0;
 
   /**
    * @brief 设置端口号
    */
-  virtual void setPort(uint16_t v) = 0;
+  inline virtual void setPort(uint16_t v) = 0;
 };
 
 /**
