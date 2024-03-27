@@ -13,7 +13,7 @@ set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic  -O3  -fPIC -g -std=c++11 -Wall -W
 # Find packages in the './third_party' directory
 include(cmake/FindPackages.cmake)
 
-# 修改log生成绝对路径改为相对路径  重定义 __FILE__
+# 修改log生成绝对路径改为相对路径 重定义 __FILE__
 include(cmake/utils.cmake)
 
 # Output compile_commands.json for clangd.

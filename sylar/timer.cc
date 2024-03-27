@@ -215,7 +215,7 @@ bool TimerManager::detextClockRollover(uint64_t now_ms) {
   if (now_ms < m_previouseTime && now_ms < (m_previouseTime - 60 * 60 * 1000)) {
     rollover = true;
   }
-  // 重置 上次执行的时间
+  // 重置上次执行的时间
   m_previouseTime = now_ms;
   return rollover;
 }

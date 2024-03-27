@@ -44,16 +44,20 @@ void Thread::SetName(const std::string &name) {
   t_thread_name = name;
 }
 
-Thread::Thread(std::function<void()> cb, const std::string &name) : m_cb(cb), m_name(name) {
+Thread::Thread(std::function<void()> cb, const std::string &name)
+    : m_cb(cb), m_name(name) {
   if (name.empty()) {
     m_name = "UNKNOW";
   }
   int rt = pthread_create(&m_thread, nullptr, &Thread::run, this);
   if (rt) {
-    SYLAR_LOG_ERROR(g_logger) << "pthread_create thread fail, rt=" << rt << " name= " << name;
+    SYLAR_LOG_ERROR(g_logger)
+        << "pthread_create thread fail, rt=" << rt << " name= " << name;
     throw std::logic_error("pthread_create error");
   }
-  // 确保线程跑起来
+  // 有的时候，创建的线程会在线程的构造函数执行完成之后，还未执行，为了防止此情况发生。
+  // 确保线程跑起来。// 阻塞去获取信号量，信号量的释放是在
+  // run函数中，这样可以确保线程跑起来
   m_semaphore.wait();
 }
 Thread::~Thread() {
@@ -67,7 +71,8 @@ void Thread::join() {
   if (m_thread) {
     int rt = pthread_join(m_thread, nullptr);
     if (rt) {
-      SYLAR_LOG_ERROR(g_logger) << "pthread_join thread fail, rt=" << rt << " name= " << m_name;
+      SYLAR_LOG_ERROR(g_logger)
+          << "pthread_join thread fail, rt=" << rt << " name= " << m_name;
       throw std::logic_error("pthread_join error");
     }
     m_thread = 0;

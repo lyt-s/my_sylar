@@ -20,7 +20,7 @@ cd $THIRD_PARTY_DIR
 #Install Boost
 if [ ! -d "$THIRD_PARTY_DIR/boost" ]; then
     rm -rf boost-1.83.0.tar.gz boost-1.83.0
-    wget https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.gz
+    wget http://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.gz
     tar -xf boost-1.83.0.tar.gz
     cd  ./boost-1.83.0
     ./bootstrap.sh --prefix=$THIRD_PARTY_DIR/boost || RET=$?
@@ -34,11 +34,10 @@ if [ ! -d "$THIRD_PARTY_DIR/boost" ]; then
     fi
 fi
 
-
 # Install yaml-cpp
 if [ ! -d "$THIRD_PARTY_DIR/yaml-cpp" ]; then
     rm -rf 0.8.0.tar.gz  yaml-cpp-0.8.0
-    wget https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
+    wget http://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
     tar -xf 0.8.0.tar.gz
     cd  ./yaml-cpp-0.8.0
     cmake -G Ninja -S . -B ./build -DCMAKE_INSTALL_PREFIX=$THIRD_PARTY_DIR/yaml-cpp || RET=$?
