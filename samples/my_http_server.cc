@@ -24,7 +24,7 @@ void run() {
 }
 
 int main() {
-  sylar::IOManager iom(1);
+  sylar::IOManager iom(3);
   iom.schedule(run);
   return 0;
 }
