@@ -14,7 +14,7 @@ void run() {
     SYLAR_LOG_ERROR(g_logger) << "get address error";
     return;
   }
-  sylar::http::HttpServer::ptr http_server(new sylar::http::HttpServer(true));
+  sylar::http::HttpServer::ptr http_server(new sylar::http::HttpServer);
   while (!http_server->bind(addr)) {
     SYLAR_LOG_ERROR(g_logger) << "bind" << *addr << " fail";
     return;

@@ -75,23 +75,22 @@ FdCtx::ptr FdManager::get(int fd, bool auto_create) {
     return nullptr;
   }
   RWMutexType::ReadLock lock(m_mutex);
-  // 越界
-  if (static_cast<int>(m_datas.size()) <= fd) {
+  if ((int)m_datas.size() <= fd) {
     if (auto_create == false) {
       return nullptr;
     }
-
   } else {
-    // 没有越界，--有值，或者 不需要创建
     if (m_datas[fd] || !auto_create) {
       return m_datas[fd];
     }
   }
-  // 需要创建的情况
   lock.unlock();
+
   RWMutexType::WriteLock lock2(m_mutex);
-  // FdCtx::ptr ctx(new FdCtx(fd));
-  FdCtx::ptr ctx = std::make_shared<FdCtx>(fd);
+  FdCtx::ptr ctx(new FdCtx(fd));
+  if (fd >= (int)m_datas.size()) {
+    m_datas.resize(fd * 1.5);
+  }
   m_datas[fd] = ctx;
   return ctx;
 }
