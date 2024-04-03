@@ -72,11 +72,11 @@ HttpRequest::ptr HttpSession::recvRequest() {
     parser->getData()->setBody(body);
   }
 
-  std::string keep_alive = parser->getData()->getHeader("connection");
-  if (!strcasecmp(keep_alive.c_str(), "keep-alive")) {
-    parser->getData()->setClose(false);
-  }
-  // parser->getData()->init();
+  // std::string keep_alive = parser->getData()->getHeader("connection");
+  // if (!strcasecmp(keep_alive.c_str(), "keep-alive")) {
+  //   parser->getData()->setClose(false);
+  // }
+  parser->getData()->init();
   return parser->getData();
 }
 int HttpSession::sendResponse(HttpResponse::ptr rsp) {

@@ -19,7 +19,7 @@ HttpServer::HttpServer(bool keepalive, sylar::IOManager *worker,
     : TcpServer(worker, io_worker, accept_worker), m_isKeepalive(keepalive) {
   m_dispatch.reset(new ServletDispatch);
 
-  // m_type = "http";
+  m_type = "http";
   // m_dispatch->addServlet("/_/status", Servlet::ptr(new StatusServlet));
   // m_dispatch->addServlet("/_/config", Servlet::ptr(new ConfigServlet));
 }
@@ -52,7 +52,7 @@ void HttpServer::handleClient(Socket::ptr client) {
     session->sendResponse(rsp);
 
     if (!m_isKeepalive || req->isClose()) {
-      SYLAR_LOG_DEBUG(g_logger) << "m_isKeepalive= " << m_isKeepalive;
+      // SYLAR_LOG_DEBUG(g_logger) << "m_isKeepalive= " << m_isKeepalive;
       break;
     }
   } while (m_isKeepalive);

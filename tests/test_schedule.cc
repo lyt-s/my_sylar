@@ -8,7 +8,7 @@
 sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
 
 void test_fiber() {
-  static int s_count = 5;
+  static int s_count = 10;
   SYLAR_LOG_INFO(g_logger) << "test in fiber s_count =" << s_count;
 
   // sleep(1);  // bug 在这里  死锁了
@@ -21,7 +21,7 @@ int main() {
   SYLAR_LOG_INFO(g_logger) << "main";
   // // bug--已解决
   // sylar::Scheduler sc(1, true, "test");
-  sylar::Scheduler sc(1, true, "test");
+  sylar::Scheduler sc(10, true, "test");
 
   sc.start();
   // sleep(2);

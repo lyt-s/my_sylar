@@ -14,7 +14,7 @@ void run() {
     SYLAR_LOG_ERROR(g_logger) << "get address error";
     return;
   }
-  sylar::http::HttpServer::ptr http_server(new sylar::http::HttpServer);
+  sylar::http::HttpServer::ptr http_server(new sylar::http::HttpServer(true));
   while (!http_server->bind(addr)) {
     SYLAR_LOG_ERROR(g_logger) << "bind" << *addr << " fail";
     return;
@@ -24,7 +24,7 @@ void run() {
 }
 
 int main() {
-  sylar::IOManager iom(3);
+  sylar::IOManager iom(1);
   iom.schedule(run);
   return 0;
 }
