@@ -99,7 +99,7 @@ void Config::LoadFromConfDir(const std::string &path, bool force) {
   FSUtil::ListAllFile(files, absoulate_path, ".yml");
 
   for (auto &i : files) {
-    // todo  // 实现了 防止重复加载
+    // todo  // 实现了防止重复加载
     // 这里只会检查根据文件的更改时间，来更新，不会检测实际上内容更新了没有
     {
       struct stat st;

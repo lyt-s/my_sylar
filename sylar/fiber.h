@@ -91,6 +91,7 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
 
   std::function<void()> m_cb;
 };
+
 }  // namespace sylar
 
 #endif  //__SYLAR_FIBER_H__

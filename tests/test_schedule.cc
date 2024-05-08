@@ -14,7 +14,8 @@ void test_fiber() {
   // sleep(1);  // bug 在这里  死锁了
   if (--s_count >= 0) {
     // 在指定线程执行
-    sylar::Scheduler::GetThis()->schedule(&test_fiber, sylar::GetThreadId());
+    // sylar::Scheduler::GetThis()->schedule(&test_fiber, sylar::GetThreadId());
+    sylar::Scheduler::GetThis()->schedule(&test_fiber);
   }
 }
 int main() {
