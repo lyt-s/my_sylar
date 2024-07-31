@@ -31,14 +31,16 @@ void test_fiber() {
 
   if (!connect(sock, (const sockaddr *)&addr, sizeof(addr))) {
   } else if (errno == EINPROGRESS) {
-    SYLAR_LOG_INFO(g_logger) << "add event errno=" << errno << " " << strerror(errno);
-    sylar::IOManager::GetThis()->addEvent(sock, sylar::IOManager::READ,
-                                          []() { SYLAR_LOG_INFO(g_logger) << "read callback"; });
+    SYLAR_LOG_INFO(g_logger)
+        << "add event errno=" << errno << " " << strerror(errno);
+    sylar::IOManager::GetThis()->addEvent(sock, sylar::IOManager::READ, []() {
+      SYLAR_LOG_INFO(g_logger) << "read callback";
+    });
     sylar::IOManager::GetThis()->addEvent(sock, sylar::IOManager::WRITE, []() {
       SYLAR_LOG_INFO(g_logger) << "write callback";
       // close(sock);
-      //   sylar::IOManager::GetThis()->cancelEvent(sock, sylar::IOManager::READ);
-      //   close(sock);
+      //   sylar::IOManager::GetThis()->cancelEvent(sock,
+      //   sylar::IOManager::READ); close(sock);
     });
 
   } else {
@@ -73,7 +75,7 @@ void test_timer() {
 void test_one() {
   std::cout << "EPOLLIN= " << EPOLLIN;
   std::cout << "EPOLLOUT= " << EPOLLOUT << "\n";
-  sylar::IOManager iom;
+  sylar::IOManager iom(2, true, "lyt");
   iom.schedule(&test_fiber);
 }
 int main() {

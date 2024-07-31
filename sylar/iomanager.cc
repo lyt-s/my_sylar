@@ -415,7 +415,6 @@ void IOManager::idle() {
         u_int8_t dummy[256];
 
         while (read(m_tickleFds[0], &dummy, sizeof(dummy)) > 0)
-
           ;
 
         continue;
