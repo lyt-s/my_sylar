@@ -10,7 +10,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <cerrno>
-#include <cstddef>
 #include <cstring>
 #include <iostream>
 sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();

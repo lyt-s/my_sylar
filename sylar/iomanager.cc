@@ -477,7 +477,7 @@ void IOManager::idle() {
     Fiber::ptr cur = Fiber::GetThis();
     auto raw_ptr = cur.get();
     cur.reset();
-
+    SYLAR_LOG_INFO(g_logger) << "idle";
     // 切换到调度协程，执行任务
     raw_ptr->swapOut();
   }

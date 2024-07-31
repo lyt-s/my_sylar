@@ -3,7 +3,6 @@
 #include "sylar/fiber.h"
 #include "sylar/log.h"
 #include "sylar/schedule.h"
-#include "util.h"
 
 sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
 
